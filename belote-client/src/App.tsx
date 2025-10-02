@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { SERVER_URL } from './Config';
 import { useEffect, useState } from 'react';
 import { Card } from './Card';
-import type { CardProps } from './types';
+import type { CardProps, Move } from './types';
 
 const socket = io(SERVER_URL);
 let playerId = sessionStorage.getItem("playerId");
@@ -15,11 +15,11 @@ socket.on("assignedId", (id) => {
 });
 
 function App() {
-  const [eventStack, setEventStack] = useState<{player: string, move: string}[]>([]);
+  const [eventStack, setEventStack] = useState<Move[]>([]);
   const [cards, setCards] = useState<string[]>([]);
 
   useEffect(() => {
-    socket.on("movePlayed", (data : {player: string, move: string}) => {
+    socket.on("movePlayed", (data : Move) => {
       setEventStack((prev) => [...prev, data]);
     });
 
@@ -33,16 +33,23 @@ function App() {
     };
   }, []);
 
-  const playMove = () => {
-    socket.emit("playMove", "Ace of Spades");
+  const playMove = (card: {suit: string, rank: string}) => {
+    let move: Move = {
+      playerId: sessionStorage.getItem("playerId")!,
+      suit: card.suit,
+      rank: card.rank
+    }
+
+    setCards((prev) => [...prev].filter(c => !(c[0] === card.suit && c.substring(1) === card.rank)));
+
+    socket.emit("playMove", move);
   };
 
   return (
   <>
-    <button onClick={playMove}>Play Move</button>
     <div>{eventStack.map((value, key) => 
     <p key={key}>
-      {value.player} played {value.move}
+      {value.playerId} played {value.rank} of {value.suit}
     </p>)}
     </div>
     {cards.map((value, key) => (
@@ -50,6 +57,7 @@ function App() {
         key={key}
         suit={value.charAt(0) as CardProps["suit"]}
         rank={value.substring(1) as CardProps["rank"]}
+        onPlay={playMove}
       />
     ))}
   </>

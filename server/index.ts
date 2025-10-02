@@ -42,7 +42,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on("playMove", (move : Move) => {
-    io.emit("movePlayed", { player: socket.id, move });
+    io.emit("movePlayed", move);
   });
   
   socket.on("disconnect", () => {
