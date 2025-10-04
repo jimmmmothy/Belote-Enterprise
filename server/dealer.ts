@@ -1,7 +1,7 @@
 import Player from "./player.ts";
 
 export default class Dealer {
-    pool: string[] = [];
+    pool: {suit: string, rank: string}[] = [];
 
     constructor() {
         this.init();
@@ -10,10 +10,41 @@ export default class Dealer {
     
     init() {
         this.pool = [
-            'c7', 'c8', 'c9', 'c10', 'cJ', 'cQ', 'cK', 'cA',
-            'd7', 'd8', 'd9', 'd10', 'dJ', 'dQ', 'dK', 'dA',
-            'h7', 'h8', 'h9', 'h10', 'hJ', 'hQ', 'hK', 'hA',
-            's7', 's8', 's9', 's10', 'sJ', 'sQ', 'sK', 'sA',
+            {suit: 'clubs', rank: '7'}, 
+            {suit: 'clubs', rank: '8'}, 
+            {suit: 'clubs', rank: '9'}, 
+            {suit: 'clubs', rank: '10'}, 
+            {suit: 'clubs', rank: 'J'},
+            {suit: 'clubs', rank: 'Q'}, 
+            {suit: 'clubs', rank: 'K'}, 
+            {suit: 'clubs', rank: 'A'}, 
+            
+            {suit: 'diamonds', rank: '7'}, 
+            {suit: 'diamonds', rank: '8'}, 
+            {suit: 'diamonds', rank: '9'}, 
+            {suit: 'diamonds', rank: '10'}, 
+            {suit: 'diamonds', rank: 'J'},
+            {suit: 'diamonds', rank: 'Q'}, 
+            {suit: 'diamonds', rank: 'K'}, 
+            {suit: 'diamonds', rank: 'A'}, 
+
+            {suit: 'hearts', rank: '7'}, 
+            {suit: 'hearts', rank: '8'}, 
+            {suit: 'hearts', rank: '9'}, 
+            {suit: 'hearts', rank: '10'}, 
+            {suit: 'hearts', rank: 'J'},
+            {suit: 'hearts', rank: 'Q'}, 
+            {suit: 'hearts', rank: 'K'}, 
+            {suit: 'hearts', rank: 'A'}, 
+
+            {suit: 'spades', rank: '7'}, 
+            {suit: 'spades', rank: '8'}, 
+            {suit: 'spades', rank: '9'}, 
+            {suit: 'spades', rank: '10'}, 
+            {suit: 'spades', rank: 'J'},
+            {suit: 'spades', rank: 'Q'}, 
+            {suit: 'spades', rank: 'K'}, 
+            {suit: 'spades', rank: 'A'}, 
         ];
         
     }

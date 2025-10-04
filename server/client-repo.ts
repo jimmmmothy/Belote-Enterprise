@@ -23,7 +23,6 @@ function reassignClientId(playerId: string, clientId: string) {
     
     if (player)
         player.socketId = clientId;
-        
 }
 
 export default {

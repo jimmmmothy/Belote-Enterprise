@@ -1,66 +1,41 @@
 import './App.css'
 import { io } from 'socket.io-client';
-import { SERVER_URL } from './Config';
+import { SERVER_URL } from './config';
 import { useEffect, useState } from 'react';
-import { Card } from './Card';
-import type { CardProps, Move } from './types';
+import type { ReceiveCards, TableProps } from './types';
+import { Table } from './Table';
 
 const socket = io(SERVER_URL);
 let playerId = sessionStorage.getItem("playerId");
 
 socket.emit("register", playerId);
 
-socket.on("assignedId", (id) => {
+socket.on("assigned_id", (id) => {
   sessionStorage.setItem("playerId", id);
 });
 
 function App() {
-  const [eventStack, setEventStack] = useState<Move[]>([]);
-  const [cards, setCards] = useState<string[]>([]);
+  const [tableProps, setTableProps] = useState<TableProps>({myId: "", hand: [], players: []});
 
   useEffect(() => {
-    socket.on("movePlayed", (data : Move) => {
-      setEventStack((prev) => [...prev, data]);
+    socket.on("send_cards", (data: ReceiveCards) => {
+      setTableProps(data);
     });
 
-    socket.on("sendCards", (data: string[]) => {
-      setCards(data);
-    })
+    socket.on("contract_phase", () => {
+      console.log("its contract time");
+    });
 
     return () => {
-      socket.off("movePlayed");
-      socket.off("sendCards");
+      socket.off("send_cards");
+      socket.off("contract_phase");
     };
   }, []);
 
-  const playMove = (card: {suit: string, rank: string}) => {
-    let move: Move = {
-      playerId: sessionStorage.getItem("playerId")!,
-      suit: card.suit,
-      rank: card.rank
-    }
-
-    setCards((prev) => [...prev].filter(c => !(c[0] === card.suit && c.substring(1) === card.rank)));
-
-    socket.emit("playMove", move);
-  };
-
   return (
-  <>
-    <div>{eventStack.map((value, key) => 
-    <p key={key}>
-      {value.playerId} played {value.rank} of {value.suit}
-    </p>)}
+    <div className='game-container'>
+      <Table myId={tableProps.myId} hand={tableProps.hand} players={tableProps.players}></Table>
     </div>
-    {cards.map((value, key) => (
-      <Card
-        key={key}
-        suit={value.charAt(0) as CardProps["suit"]}
-        rank={value.substring(1) as CardProps["rank"]}
-        onPlay={playMove}
-      />
-    ))}
-  </>
   )
 }
 
