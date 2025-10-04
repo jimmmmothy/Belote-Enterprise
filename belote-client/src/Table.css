@@ -5,7 +5,7 @@
   width: 100vw;
   justify-content: space-between;
   align-items: center;
-  padding: 5rem;
+  padding: 2rem;
 }
 
 .row {
@@ -34,11 +34,30 @@
   transform: rotate(-90deg);
 }
 
-.card {
-  width: 100px;
-  margin: 2px;
-}
-
 .left-vert {
   transform: rotate(90deg);
+}
+
+.row.bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bottom .hand {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 90vw;
+  gap: 0.5rem;
+}
+
+.card {
+  width: 80px;
+  transition: transform 0.2s ease, margin 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-10px);
 }

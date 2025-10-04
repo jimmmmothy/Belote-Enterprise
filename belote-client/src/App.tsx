@@ -15,15 +15,26 @@ socket.on("assigned_id", (id) => {
 });
 
 function App() {
-  const [tableProps, setTableProps] = useState<TableProps>({myId: "", hand: [], players: []});
+  const [tableProps, setTableProps] = useState<TableProps>({myId: "", hand: [], players: [], myTurn: false, onSelectContract: () => {}});
 
   useEffect(() => {
     socket.on("send_cards", (data: ReceiveCards) => {
-      setTableProps(data);
+        setTableProps(prev => ({
+          ...prev,
+          ...data
+        }));
     });
 
-    socket.on("contract_phase", () => {
-      console.log("its contract time");
+    socket.on("contract_phase", (available) => {
+      setTableProps(prev => ({
+        ...prev,
+        myTurn: true,
+        contracts: available
+      }));
+    });
+
+    socket.on("contract_done", (data) => {
+      console.log("Contract results:", data);
     });
 
     return () => {
@@ -32,9 +43,22 @@ function App() {
     };
   }, []);
 
+  let onSelectContract = (playerId: string, contract: string) => {
+    socket.emit("select_contract", { playerId, contract });
+    setTableProps(prev => ({
+      ...prev,
+      myTurn: false
+    }));
+  }
+
   return (
     <div className='game-container'>
-      <Table myId={tableProps.myId} hand={tableProps.hand} players={tableProps.players}></Table>
+      <Table myTurn={tableProps.myTurn}
+       contracts={tableProps.contracts}
+       myId={tableProps.myId} 
+       hand={tableProps.hand} 
+       players={tableProps.players} 
+       onSelectContract={onSelectContract}></Table>
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { Card } from "./Card.tsx";
 import "./Table.css";
 import type { CardProps, TableProps } from "./types.ts";
 
-export function Table({ myId, hand, players }: TableProps) {
+export function Table({ myId, hand, players, contracts, myTurn, onSelectContract }: TableProps) {
   // Ensure "me" is always at index 0
   const myIndex = players.findIndex((p) => p.id === myId);
   const ordered = [...players.slice(myIndex), ...players.slice(0, myIndex)];
@@ -57,16 +57,31 @@ export function Table({ myId, hand, players }: TableProps) {
 
       {/* Bottom player (me) */}
       <div className="row bottom">
-        {hand.map((c, i) => (
-          <Card
+        {contracts && myTurn && (
+          <div className="contracts">
+            {contracts.map(c => (
+              <button key={c} onClick={() => {
+                onSelectContract(myId, c);
+              }}>
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="hand">
+          {hand.map((c, i) => (
+            <div className="card">
+            <Card
             key={`me-${i}`}
             suit={c.suit as CardProps["suit"]}
             rank={c.rank as CardProps["rank"]}
             onPlay={() => {
               console.log("PLAYED", c);
             }}
-          />
-        ))}
+            />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

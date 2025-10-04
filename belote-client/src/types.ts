@@ -20,6 +20,8 @@ export type ReceiveCards = {
     }[]
 }
 
+export type AvailableContracts = string[];
+
 export type TableProps = {
     myId: string,
     hand: {
@@ -28,5 +30,8 @@ export type TableProps = {
     }[],
     players: {
         id: string
-    }[]
+    }[],
+    contracts?: AvailableContracts,
+    myTurn: boolean,
+    onSelectContract: (playerId: string, contract: string) => void
 }

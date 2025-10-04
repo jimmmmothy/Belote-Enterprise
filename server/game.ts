@@ -1,32 +1,26 @@
 import Dealer from "./dealer.ts";
 import Player from "./player.ts";
 
-const Contracts = {
-    UNDEFINED: 0,
-    CLUBS: 1,
-    DIAMONDS: 2,
-    HEARTS: 3,
-    SPADES: 4,
-    NO_T: 5,
-    ALL_T: 6,
-}
+const Contracts = ["Pass", "Clubs", "Diamonds", "Hearts", "Spades", "No Trumps", "All Trumps"];
 
 type GameEvents = {
-    onContractPhase: (gameId: string) => void;
     onDealtCards: (players: Player[]) => void;
+    onContractPhase: (gameId: string, available: string[]) => void;
+    onContractDone: (gameId: string, finalContract: string) => void;
 }
 
 export default class Game {
     id: string;
     players: Player[] = [];
     dealer: Dealer;
-    contract: number;
     events: GameEvents;
+    currentPlayerIndex: number = 0;
+    bids: Map<string, string> = new Map(); // playerId -> contract
+    highestContract: string = "Pass";
 
     constructor(id: string, events: GameEvents) {
         this.id = id;
         this.dealer = new Dealer();
-        this.contract = Contracts.UNDEFINED;
         this.events = events;
     }
 
@@ -50,6 +44,63 @@ export default class Game {
         this.dealer.firstDeal(this.players);
         this.events.onDealtCards(this.players);
 
-        this.events.onContractPhase(this.id);
+        this.startContractPhase();
+    }
+
+    startContractPhase() {
+        this.currentPlayerIndex = 0;
+        this.bids.clear();
+        this.highestContract = "Pass";
+        this.askNextPlayer();
+    }
+
+    askNextPlayer() {
+        const player = this.players[this.currentPlayerIndex];
+        this.events.onContractPhase(player.socketId, this.availableContracts());
+    }
+
+    availableContracts(): string[] {
+        const base = ["Pass", ...Contracts.slice(Contracts.indexOf(this.highestContract) + 1)];
+        return base;
+    }
+
+    handleContractSelection(playerId: string, contract: string) {
+        const player = this.players[this.currentPlayerIndex];
+            
+        if (player.playerId !== playerId) throw Error("Not your turn");
+            
+        this.bids.set(playerId, contract);
+        
+        if (Contracts.indexOf(contract) > Contracts.indexOf(this.highestContract))
+            this.highestContract = contract;
+    
+        // Move to next player
+        if (this.currentPlayerIndex === 3) {
+            this.currentPlayerIndex = 0;
+        } else {
+            this.currentPlayerIndex++;
+        }
+
+        const nextPlayer = this.players[this.currentPlayerIndex];
+    
+        if (this.bids.get(nextPlayer.playerId) === this.highestContract) {
+            this.finishContractPhase();
+        } else {
+            this.askNextPlayer();
+        }
+    }
+    
+    finishContractPhase() {
+        if (this.highestContract === "Pass") {
+            this.players.forEach(p => p.cards = []);
+            this.dealer.shuffle();
+            this.start();
+
+            return;
+        }
+
+        this.dealer.secondDeal(this.players);
+        this.events.onDealtCards(this.players);
+        this.events.onContractDone(this.id, this.highestContract);
     }
 }

@@ -15,8 +15,8 @@ io.on('connection', (socket) => {
   socket.on("register", (playerId: string | null) => {
     if (!games.find(g => g.id === "demo")) { // If game doesn't exist yet -> create it
         const game = new Game("demo", {
-          onContractPhase: (gameId: string) => {
-            io.to(gameId).emit("contract_phase");
+          onContractPhase: (socketId: string, available: string[]) => {
+            io.to(socketId).emit("contract_phase", available);
           },
           onDealtCards: (players: Player[]) => {
             players.forEach(p => {
@@ -27,6 +27,9 @@ io.on('connection', (socket) => {
               
               io.to(p.socketId).emit("send_cards", data);
             });
+          },
+          onContractDone: (gameId: string, finalContract: string) => {
+            io.to(gameId).emit("contract_done", finalContract);
           }
         }
       );
@@ -35,17 +38,19 @@ io.on('connection', (socket) => {
     }
 
     const game = games.find(g => g.id === "demo"); // Get existing (or just created) game
+    if (!game) throw Error("Game not found!");
+
     socket.join("demo");
-    let player = game!.players.find(p => p.playerId === playerId);
+    let player = game.players.find(p => p.playerId === playerId);
 
     if (playerId && player) { // If player refreshed their page
       console.log("Returning player:", playerId);
       let data: SendCards = { myId: playerId, hand: player.cards, players: []}
-      game!.players.forEach(p => { // Completely unnecessary because data.players is the same for each player. Could be extracted outside
+      game.players.forEach(p => { // Completely unnecessary because data.players is the same for each player. Could be extracted outside
         data.players.push({ id: p.playerId });
       });
       io.to(socket.id).emit("send_cards", data);
-      game!.reassignClientId(playerId, socket.id);
+      game.reassignClientId(playerId, socket.id);
       return;
     }
 
@@ -54,15 +59,26 @@ io.on('connection', (socket) => {
     player = new Player(socket.id, newId);
     
     try {
-      const playerCount = game!.addPlayer(player);
+      const playerCount = game.addPlayer(player);
       socket.emit("assigned_id", newId);
       console.log("New player:", newId);
 
-      if (playerCount === 4) { // 4 players have joined. Ready to launch game
-        game!.start();
+      if (playerCount === 4) { // 4 players have joined. Ready to launch game        
+        game.start();
       }
     } catch (e) {
       console.log((e as Error).message);
+    }
+  });
+
+  socket.on("select_contract", (data: { playerId: string, contract: string }) => {
+    const game = games.find(g => g.id === "demo");
+    if (!game) return;
+
+    try {
+      game.handleContractSelection(data.playerId, data.contract);
+    } catch (e) {
+      console.log("Contract error:", (e as Error).message);
     }
   });
   
