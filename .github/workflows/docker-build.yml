@@ -27,7 +27,7 @@ jobs:
 
       - name: Build and push client image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/belote-client:latest ./client
+          docker build -t ghcr.io/${{ github.repository_owner }}/belote-client:latest ./belote-client
           docker push ghcr.io/${{ github.repository_owner }}/belote-client:latest
 
       - name: Build and push server image
