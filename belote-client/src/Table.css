@@ -61,3 +61,53 @@
 .card:hover {
   transform: translateY(-10px);
 }
+
+.contracts {
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+}
+
+.center-space {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* shared base style for trick cards */
+.trick-card {
+  position: absolute;
+  width: 90px;
+  height: auto;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+/* --- diamond layout --- */
+.trick-bottom {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(15%);
+}
+
+.trick-top {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(-15%);
+}
+
+.trick-left {
+  left: 0;
+  top: 50%;
+  transform: translateX(-30%) translateY(-50%);
+}
+
+.trick-right {
+  right: 0;
+  top: 50%;
+  transform: translateX(30%) translateY(-50%);
+}

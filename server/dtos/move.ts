@@ -1,5 +1,5 @@
 export type Move = {
-    id: string,
+    playerId: string,
     suit: string,
     rank: string
 }

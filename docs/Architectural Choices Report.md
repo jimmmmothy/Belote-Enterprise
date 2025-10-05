@@ -1,6 +1,6 @@
 # Architecture Choices Report
 
-## Current Architecture (as of 02.10.2025)
+## Current Architecture (as of 05.10.2025)
 
 ### Overview
 The project is currently structured as a **monorepo** with two main components:
@@ -20,7 +20,8 @@ This setup follows a **client-server architecture**, with real-time communicatio
 - **Structure**:
   - `src/` contains React components and configuration:
     - `App.tsx` – main application component.
-    - `Card.tsx` – component representing a single card (with styling in `Card.css`).
+    - `Table.tsx` - component representing the playing table, with a view of the user's cards and other players.
+    - `Card.tsx` – component representing a single card.
     - `types.ts` – TypeScript type definitions for consistency across client and server.
     - `Config.ts` – configuration values such as server URL.
   - `assets/` – card images and other static resources.
@@ -35,13 +36,14 @@ This setup follows a **client-server architecture**, with real-time communicatio
   - Enforce game rules.
   - Synchronize state across all players in a match.
 - **Structure**:
-  - `index.ts` – entry point for the server.
+  - `index.ts` – entry point for the server; contains all event handling and directs communication between client and game logic.
+  - `game.ts` - handles the logic of the game, including rules, validating player moves.
   - `dealer.ts` – handles dealing/shuffling of cards.
   - `player.ts` – manages player state.
-  - `client-repo.ts` – repository of connected clients.
   - `dtos/move.ts` – defines data transfer objects for moves (shared structure for client-server communication).
+  - `dtos/send-hand.ts` – defines data transfer objects for the dealt hand (shared structure for client-server communication).  
 
-The gameplay handling logic is separated from the client-server communication logic within the current server application. This will allow me to easily refactor/recycle the code when migrating to a microservices architecture (see [Architectural Pattern](#architectural-pattern) below)
+The gameplay handling is logically separated from the client-server communication logic within the current server application. This will allow me to easily refactor/recycle the code when migrating to a microservices architecture (see [Architectural Pattern](#architectural-pattern) below)
 
 ---
 
@@ -52,7 +54,7 @@ The gameplay handling logic is separated from the client-server communication lo
 ---
 
 ### Database
-Currently, **no database is integrated**. All state is kept in memory during runtime. Persistent storage (e.g., user accounts, finished games, statistics) will be introduced later when additional services like login/registration and scoring are implemented.
+Currently, **no database is integrated**. All state is kept in memory during runtime for the sake of development haste. Persistent storage (e.g., user accounts, finished games, statistics) will be introduced later when additional services like login/registration and scoring are implemented.
 
 ---
 

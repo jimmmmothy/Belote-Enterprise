@@ -9,7 +9,7 @@ export type Move = {
   rank: string
 }
 
-export type ReceiveCards = {
+export type ReceiveHand = {
     myId: string,
     hand: {
         suit: string,
@@ -32,6 +32,6 @@ export type TableProps = {
         id: string
     }[],
     contracts?: AvailableContracts,
+    trick?: Move[],
     myTurn: boolean,
-    onSelectContract: (playerId: string, contract: string) => void
 }

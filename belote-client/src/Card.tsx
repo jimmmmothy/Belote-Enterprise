@@ -1,34 +1,91 @@
 import './Card.css'
 import type { CardProps } from './types';
-import { motion, useMotionValue, useTransform } from "framer-motion";
+import { motion, useMotionValue, animate } from "framer-motion";
+import { useState } from 'react';
 
 const cardImages = import.meta.glob("./assets/*.png", { eager: true });
 
-export function Card({ suit, rank, onPlay }: CardProps & { onPlay: (card: { suit: string, rank: string }) => void }) {
+export function Card({
+  suit,
+  rank,
+  onPlay,
+  playAreaRef,
+  isPlayable = true,
+}: CardProps & {
+  onPlay: (card: { suit: string; rank: string }) => void;
+  playAreaRef?: React.RefObject<HTMLDivElement | null>;
+  isPlayable?: boolean;
+}) {
   const key = `./assets/${suit}_${rank}.png`;
   const imgSrc = (cardImages[key] as { default: string }).default;
 
-  // Track drag movement
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  // Make card tilt a little based on horizontal drag
-  const rotate = useTransform(x, [-150, 0, 150], [12, 0, -12]);
+  const handlePlay = () => {
+    if (!isPlayable || isAnimating) return;
+
+    if (!playAreaRef?.current) {
+      onPlay({ suit, rank });
+      return;
+    }
+
+    const cardRect = (document.querySelector(`[data-card="${suit}-${rank}"]`) as HTMLElement)?.getBoundingClientRect();
+    const areaRect = playAreaRef.current.getBoundingClientRect();
+    if (!cardRect || !areaRect) return;
+
+    const targetX = areaRect.left + areaRect.width / 2 - (cardRect.left + cardRect.width / 2);
+    const targetY = areaRect.top + areaRect.height / 2 - (cardRect.top + cardRect.height / 2);
+
+    setIsAnimating(true);
+
+    // Animate card to center
+    const controlsX = animate(x, targetX, { type: "spring", stiffness: 150, damping: 20 });
+    const controlsY = animate(y, targetY, {
+      type: "spring",
+      stiffness: 150,
+      damping: 20,
+      onComplete: () => {
+        setIsAnimating(false);
+        onPlay({ suit, rank });
+      },
+    });
+
+    return () => {
+      controlsX.stop();
+      controlsY.stop();
+    };
+  };
+
+  const resetPosition = () => {
+    if (!isPlayable) return;
+    animate(x, 0, { type: "spring", stiffness: 300, damping: 25 });
+    animate(y, 0, { type: "spring", stiffness: 300, damping: 25 });
+  };
 
   return (
     <motion.img
       className="card"
       src={imgSrc}
       alt={`${rank} of ${suit}`}
-      drag
+      data-card={`${suit}-${rank}`}
+      drag={isPlayable && !isAnimating}
       dragElastic={0.2}
-      style={{ x, y, rotate }}
-      onDoubleClick={() => onPlay({ suit, rank })}
+      dragMomentum={false}
+      style={{
+        x,
+        y,
+        zIndex: isAnimating ? 1000 : undefined,
+        cursor: isPlayable ? "grab" : "default",
+        opacity: isPlayable ? 1 : 0.8,
+        pointerEvents: isPlayable ? "auto" : "none",
+      }}
+      onDoubleClick={handlePlay}
       onDragEnd={(_event, info) => {
-        // Example: play card if dragged above some Y threshold (e.g. play area at top)
-        if (info.point.y < 200) {
-          onPlay({ suit, rank });
-        }
+        if (!isPlayable) return;
+        if (info.point.y < 200) handlePlay();
+        else resetPosition();
       }}
     />
   );

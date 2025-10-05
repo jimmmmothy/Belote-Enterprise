@@ -2,7 +2,7 @@ import './App.css'
 import { io } from 'socket.io-client';
 import { SERVER_URL } from './config';
 import { useEffect, useState } from 'react';
-import type { ReceiveCards, TableProps } from './types';
+import type { AvailableContracts, Move, ReceiveHand, TableProps } from './types';
 import { Table } from './Table';
 
 const socket = io(SERVER_URL);
@@ -15,17 +15,17 @@ socket.on("assigned_id", (id) => {
 });
 
 function App() {
-  const [tableProps, setTableProps] = useState<TableProps>({myId: "", hand: [], players: [], myTurn: false, onSelectContract: () => {}});
+  const [tableProps, setTableProps] = useState<TableProps>({myId: "", hand: [], players: [], myTurn: false});
 
   useEffect(() => {
-    socket.on("send_cards", (data: ReceiveCards) => {
+    socket.on("send_hand", (data: ReceiveHand) => {
         setTableProps(prev => ({
           ...prev,
           ...data
         }));
     });
 
-    socket.on("contract_phase", (available) => {
+    socket.on("bidding_phase", (available: AvailableContracts) => {
       setTableProps(prev => ({
         ...prev,
         myTurn: true,
@@ -33,23 +33,45 @@ function App() {
       }));
     });
 
-    socket.on("contract_done", (data) => {
-      console.log("Contract results:", data);
+    socket.on("your_turn", () => {
+      setTableProps(prev => ({
+        ...prev,
+        contracts: undefined,
+        myTurn: true
+      }));
+    });
+
+    socket.on("played_move", (data: { trick: Move[], nextPlayer: string }) => {
+      setTableProps(prev => ({
+        ...prev,
+        trick: data.trick,
+        myTurn: sessionStorage.getItem("playerId") === data.nextPlayer ? true : false
+      }));
     });
 
     return () => {
-      socket.off("send_cards");
-      socket.off("contract_phase");
+      socket.off("send_hand");
+      socket.off("bidding_phase");
+      socket.off("your_turn");
+      socket.off("played_move");
     };
   }, []);
 
-  let onSelectContract = (playerId: string, contract: string) => {
+  const selectContract = (playerId: string, contract: string) => {
     socket.emit("select_contract", { playerId, contract });
     setTableProps(prev => ({
       ...prev,
       myTurn: false
     }));
-  }
+  };
+
+  const playMove = (move: Move) => {
+    socket.emit("play_move", move);
+    setTableProps(prev => ({
+      ...prev,
+      myTurn: false
+    }));
+  };
 
   return (
     <div className='game-container'>
@@ -58,7 +80,9 @@ function App() {
        myId={tableProps.myId} 
        hand={tableProps.hand} 
        players={tableProps.players} 
-       onSelectContract={onSelectContract}></Table>
+       trick={tableProps.trick}
+       onSelectContract={selectContract}
+       onPlayMove={playMove}></Table>
     </div>
   )
 }

@@ -1,12 +1,14 @@
 import Dealer from "./dealer.ts";
+import type { Move } from "./dtos/move.ts";
 import Player from "./player.ts";
 
 const Contracts = ["Pass", "Clubs", "Diamonds", "Hearts", "Spades", "No Trumps", "All Trumps"];
 
 type GameEvents = {
     onDealtCards: (players: Player[]) => void;
-    onContractPhase: (gameId: string, available: string[]) => void;
-    onContractDone: (gameId: string, finalContract: string) => void;
+    onBiddingPhase: (socketId: string, available: string[]) => void;
+    notifyPlayerTurn: (socketId: string) => void;
+    onPlayingPhase: (gameId: string, trick: Move[], nextPlayer: string) => void;
 }
 
 export default class Game {
@@ -14,9 +16,13 @@ export default class Game {
     players: Player[] = [];
     dealer: Dealer;
     events: GameEvents;
+
     currentPlayerIndex: number = 0;
+    
     bids: Map<string, string> = new Map(); // playerId -> contract
     highestContract: string = "Pass";
+
+    currentTrick: Move[] = []; // playerId -> card
 
     constructor(id: string, events: GameEvents) {
         this.id = id;
@@ -33,7 +39,7 @@ export default class Game {
         }
     }
 
-    reassignClientId(playerId: string, clientId: string) {
+    reassignClientId(playerId: string, clientId: string) { // useful for reconnecting players
         let player = this.players.find(p => p.playerId === playerId);
         
         if (player)
@@ -44,10 +50,10 @@ export default class Game {
         this.dealer.firstDeal(this.players);
         this.events.onDealtCards(this.players);
 
-        this.startContractPhase();
+        this.startBiddingPhase();
     }
 
-    startContractPhase() {
+    startBiddingPhase() {
         this.currentPlayerIndex = 0;
         this.bids.clear();
         this.highestContract = "Pass";
@@ -56,15 +62,14 @@ export default class Game {
 
     askNextPlayer() {
         const player = this.players[this.currentPlayerIndex];
-        this.events.onContractPhase(player.socketId, this.availableContracts());
+        this.events.onBiddingPhase(player.socketId, this.availableContracts());
     }
 
     availableContracts(): string[] {
-        const base = ["Pass", ...Contracts.slice(Contracts.indexOf(this.highestContract) + 1)];
-        return base;
+        return ["Pass", ...Contracts.slice(Contracts.indexOf(this.highestContract) + 1)];;
     }
 
-    handleContractSelection(playerId: string, contract: string) {
+    handleBid(playerId: string, contract: string) {
         const player = this.players[this.currentPlayerIndex];
             
         if (player.playerId !== playerId) throw Error("Not your turn");
@@ -84,13 +89,13 @@ export default class Game {
         const nextPlayer = this.players[this.currentPlayerIndex];
     
         if (this.bids.get(nextPlayer.playerId) === this.highestContract) {
-            this.finishContractPhase();
+            this.finishBiddingPhase();
         } else {
             this.askNextPlayer();
         }
     }
     
-    finishContractPhase() {
+    finishBiddingPhase() {
         if (this.highestContract === "Pass") {
             this.players.forEach(p => p.cards = []);
             this.dealer.shuffle();
@@ -101,6 +106,36 @@ export default class Game {
 
         this.dealer.secondDeal(this.players);
         this.events.onDealtCards(this.players);
-        this.events.onContractDone(this.id, this.highestContract);
+        this.startPlayingPhase();
+    }
+
+    startPlayingPhase() {
+        this.currentPlayerIndex = 0;
+        this.events.notifyPlayerTurn(this.players[this.currentPlayerIndex].socketId);
+    }
+
+    handlePlayingMove(move: Move) {
+        const player = this.players[this.currentPlayerIndex];
+            
+        if (player.playerId !== move.playerId) throw Error("Not your turn");
+        if (this.currentTrick.find(t => t.playerId === move.playerId)) throw Error("You already played");
+
+        this.currentTrick.push(move);
+        player.removeCard({ suit: move.suit, rank: move.rank });
+        console.log("[INFO] Move played by", move.playerId, ":", move.suit, move.rank);
+        
+        // Move to next player
+        if (this.currentPlayerIndex === 3) {
+            this.currentPlayerIndex = 0;
+        } else {
+            this.currentPlayerIndex++;
+        }
+
+        this.events.onPlayingPhase(this.id, this.currentTrick, this.players[this.currentPlayerIndex].playerId);
+               
+        if (this.currentTrick.length === 4) { // All players have played
+            // Finish
+            console.log("Finished for now");
+        } 
     }
 }

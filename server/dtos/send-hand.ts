@@ -1,4 +1,4 @@
-export type SendCards = {
+export type SendHand = {
     myId: string,
     hand: {
         suit: string,
