@@ -6,9 +6,9 @@ import type { AvailableContracts, Move, ReceiveHand, TableProps } from './types'
 import { Table } from './Table';
 
 const socket = io(SERVER_URL);
-let playerId = sessionStorage.getItem("playerId");
+const PLAYER_ID = sessionStorage.getItem("playerId");
 
-socket.emit("register", playerId);
+socket.emit("register", PLAYER_ID);
 
 socket.on("assigned_id", (id) => {
   sessionStorage.setItem("playerId", id);
@@ -18,14 +18,21 @@ function App() {
   const [tableProps, setTableProps] = useState<TableProps>({myId: "", hand: [], players: [], myTurn: false});
 
   useEffect(() => {
-    socket.on("send_hand", (data: ReceiveHand) => {
-        setTableProps(prev => ({
-          ...prev,
-          ...data
-        }));
+    socket.on("send_cards", (data: ReceiveHand) => {
+      setTableProps(prev => ({
+        ...prev,
+        ...data
+      }));
     });
 
-    socket.on("bidding_phase", (available: AvailableContracts) => {
+    socket.on("send_trick", (trick: Move[]) => {
+      setTableProps(prev => ({
+        ...prev,
+        trick: trick
+      }));
+    });
+
+    socket.on("bidding_turn", (available: AvailableContracts) => {
       setTableProps(prev => ({
         ...prev,
         myTurn: true,
@@ -33,27 +40,31 @@ function App() {
       }));
     });
 
-    socket.on("your_turn", () => {
+    socket.on("playing_turn", () => {
       setTableProps(prev => ({
         ...prev,
-        contracts: undefined,
         myTurn: true
       }));
     });
 
-    socket.on("played_move", (data: { trick: Move[], nextPlayer: string }) => {
+    socket.on("move_played", (move: Move) => {
       setTableProps(prev => ({
         ...prev,
-        trick: data.trick,
-        myTurn: sessionStorage.getItem("playerId") === data.nextPlayer ? true : false
+        trick: [...(prev.trick ?? []), move],
+        players: prev.players.map(p =>
+          p.id === move.playerId
+            ? { ...p, handLength: Math.max(0, p.handLength - 1) }
+            : p
+        ),
+        hand: move.playerId === PLAYER_ID ? prev.hand.filter(card => !(card.suit === move.suit && card.rank === move.rank)) : prev.hand
       }));
     });
 
     return () => {
-      socket.off("send_hand");
-      socket.off("bidding_phase");
-      socket.off("your_turn");
-      socket.off("played_move");
+      socket.off("send_cards");
+      socket.off("bidding_turn");
+      socket.off("playing_turn");
+      socket.off("move_played");
     };
   }, []);
 
@@ -61,7 +72,8 @@ function App() {
     socket.emit("select_contract", { playerId, contract });
     setTableProps(prev => ({
       ...prev,
-      myTurn: false
+      myTurn: false,
+      contracts: undefined
     }));
   };
 

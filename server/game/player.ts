@@ -1,7 +1,9 @@
+import type { Card } from './phases/types.ts';
+
 export default class Player {
     socketId: string; // id of the socket so the server knows which client to send what data
     playerId: string; // Unique, immutable uuid for each player which persists after refresh
-    cards: { suit: string, rank: string }[];
+    cards: Card[];
 
     constructor(socketId: string, playerId: string) {
         this.socketId = socketId;
@@ -14,6 +16,6 @@ export default class Player {
     }
 
     removeCard(card: { suit: string, rank: string }) {
-        this.cards = this.cards.filter(c => c !== card);
+        this.cards = this.cards.filter(c => !(c.suit === card.suit && c.rank === card.rank));
     }
 }

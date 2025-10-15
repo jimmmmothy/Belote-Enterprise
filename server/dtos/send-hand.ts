@@ -5,6 +5,7 @@ export type SendHand = {
         rank: string
     }[],
     players: {
-        id: string
+        id: string,
+        handLength: number
     }[]
 }

@@ -21,14 +21,14 @@ export function Table({ myId, hand, players, contracts, trick, myTurn, onSelectC
     <div className="table">
       <div className="row top">
         {top && hand.length > 0 &&
-          Array.from({ length: hand.length }).map((_, i) => (
+          Array.from({ length: top.handLength }).map((_, i) => (
             <Card key={`top-${i}`} suit={"back"} rank={"light"} onPlay={() => {}} playAreaRef={playAreaRef} isPlayable={false} />
           ))}
       </div>
 
       <div className="middle">
         <div className="col left">
-          {left && Array.from({ length: hand.length }).map((_, i) => (
+          {left && Array.from({ length: left.handLength }).map((_, i) => (
             <Card key={`left-${i}`} suit={"back"} rank={"light"} onPlay={() => {}} playAreaRef={playAreaRef} isPlayable={false} />
           ))}
         </div>
@@ -53,7 +53,7 @@ export function Table({ myId, hand, players, contracts, trick, myTurn, onSelectC
         </div>
 
         <div className="col right">
-          {right && Array.from({ length: hand.length }).map((_, i) => (
+          {right && Array.from({ length: right.handLength }).map((_, i) => (
             <Card key={`right-${i}`} suit={"back"} rank={"light"} onPlay={() => {}} playAreaRef={playAreaRef} isPlayable={false} />
           ))}
         </div>
@@ -70,8 +70,8 @@ export function Table({ myId, hand, players, contracts, trick, myTurn, onSelectC
           </div>
         )}
         <div className="hand">
-          {hand.map((c, i) => (
-            <div className="card" key={`me-${i}`}>
+          {hand.map((c) => (
+            <div className="card" key={`${c.suit}-${c.rank}`}>
               <Card
                 suit={c.suit as CardProps["suit"]}
                 rank={c.rank as CardProps["rank"]}

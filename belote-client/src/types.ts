@@ -16,7 +16,8 @@ export type ReceiveHand = {
         rank: string
     }[],
     players: {
-        id: string
+        id: string,
+        handLength: number
     }[]
 }
 
@@ -29,7 +30,8 @@ export type TableProps = {
         rank: string
     }[],
     players: {
-        id: string
+        id: string,
+        handLength: number
     }[],
     contracts?: AvailableContracts,
     trick?: Move[],
