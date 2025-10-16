@@ -1,4 +1,4 @@
-import type { Card } from './phases/types.ts';
+import type { Card } from './types';
 
 export default class Player {
     socketId: string; // id of the socket so the server knows which client to send what data

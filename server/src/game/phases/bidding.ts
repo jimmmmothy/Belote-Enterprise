@@ -1,5 +1,5 @@
-import type { GameState, PhaseType } from "./types.ts";
-import { startPlayingPhase } from "./playing.ts";
+import type { GameState, PhaseType } from "../types";
+import { startPlayingPhase } from "./playing";
 
 export const Contracts = ["Pass", "Clubs", "Diamonds", "Hearts", "Spades", "No Trumps", "All Trumps"];
 

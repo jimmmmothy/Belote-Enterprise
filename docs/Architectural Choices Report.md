@@ -1,6 +1,42 @@
 # Architecture Choices Report
 
-## Current Architecture (as of 05.10.2025)
+## Current Architecture (as of 16.10.2025)
+I have updated the architecture of the applications, most notably the server.
+
+### Server
+In order to update the process of running a production version of my server, I have updated the Dockerfile and scripts available to build and start. Now Typescript files get parsed into Javascript, similarly to the client application.
+Therefore I placed the server logic inside a main `src/` folder.
+- **New Structure**
+  - `src/`
+    - `dtos/`
+      - `move.ts`
+      - `send-hand.ts`
+    - `game/` - newly added folder to hold all game logic
+      - `phases/`
+        - `bidding.ts` - logic during the bidding phase
+        - `playing.ts` - logic during the playing phase
+      - `dealer.ts`
+      - `game.ts`
+      - `player.ts`
+      - `types.ts`
+    - `index.ts`
+
+**OOP and functional** <br>
+In my mind, it makes sense that the game object should be an object, an instance of a class. Each game will hold its own players, dealer and state. However, I opted to keep the bidding and playing logic as purely functional, since it helps with separation of concerns, neatness and I believe that's logic that doesn't need to be tied to the instance of a game class, it will never change. I have achieved this by putting all the necessary game fields into one state field, which gets passed through the phases logic.
+
+**Events** <br>
+I have restructured the way I trigger events. This was necessary due to the refactor I made with the separation of phases and restructuring of folders and files. Now, events are created in the index/gateway layer of the server and passed as parameters through the game class and its helper functions. This allows me to emit any type of event from anywhere within my code structure.
+
+**Dockerfile** <br>
+It is now tested and working. I have introduced proper handling of typescript within this app (added `tsconfig.json` for TS compiling to JS within a `dist/` folder), and a good pipeline to build and start the app.
+
+### Client
+There have been no major changes to the client. Only minor updates and tweaks to reflect the server's updates in logic.
+
+### Extra
+The architectural pattern is still of a monolithic client-server application. The eventual shift to microservices is approaching steadily at a rapid pace. Once the game is playable *enough*, I will apply the "Strangler" design pattern for migration. For a brief moment in time during development, both my microservice and monolith architecture will exist until stability can be guaranteed, at which point full migration can occur.
+
+## Outdated Architecture (as of 05.10.2025)
 
 ### Overview
 The project is currently structured as a **monorepo** with two main components:

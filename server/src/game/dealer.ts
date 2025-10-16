@@ -1,4 +1,4 @@
-import Player from "./player.ts";
+import Player from "./player";
 
 export default class Dealer {
     pool: {suit: string, rank: string}[] = [];

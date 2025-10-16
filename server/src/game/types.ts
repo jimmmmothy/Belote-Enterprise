@@ -1,6 +1,6 @@
-import type { Move } from "../../dtos/move.ts";
-import Dealer from "../dealer.ts";
-import type Player from "../player.ts";
+import type { Move } from "../dtos/move";
+import Dealer from "./dealer";
+import type Player from "./player";
 
 export type PhaseType = "BIDDING" | "PLAYING" | "SCORING";
 

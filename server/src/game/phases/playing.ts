@@ -1,6 +1,6 @@
-import type { Card, GameState } from "./types.ts";
-import type { Move } from "../../dtos/move.ts";
-import Player from "../player.ts";
+import type { Card, GameState } from "../types";
+import type { Move } from "../../dtos/move";
+import Player from "../player";
 
 const TrumpOrder : Record<string, number> = {
   '7': 0,

@@ -1,12 +1,12 @@
 import express from 'express';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io'; 
-import Player from './game/player.ts';
+import Player from './game/player';
 import { v4 } from 'uuid'
-import Game from './game/game.ts';
-import type { SendHand } from './dtos/send-hand.ts';
-import type { Move } from './dtos/move.ts';
-import { availableContracts } from './game/phases/bidding.ts';
+import Game from './game/game';
+import type { SendHand } from './dtos/send-hand';
+import type { Move } from './dtos/move';
+import { availableContracts } from './game/phases/bidding';
 
 const app = express();
 const server = createServer(app);
