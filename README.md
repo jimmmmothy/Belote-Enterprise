@@ -9,3 +9,4 @@ docker run -d --name belote-client -p 5173:80 ghcr.io/jimmmmothy/belote-client:l
 ```
 docker run -d --name belote-server -p 3000:3000 ghcr.io/jimmmmothy/belote-server:latest
 ```
+Then, open four browser tabs at http://localhost:5173. Once you open four clients, the game knows it can start to play.
