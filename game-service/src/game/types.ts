@@ -13,6 +13,10 @@ export type GameState = {
   highestContract: string;
   bids: Map<string, string>;
   currentTrick: Move[];
+  score: {
+    team0: number,
+    team1: number
+  }
 }
 
 export type Card = {

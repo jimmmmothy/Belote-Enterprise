@@ -1,143 +1,101 @@
-import express from 'express';
-import { createServer } from 'node:http';
-import { Server } from 'socket.io'; 
-import Player from './game/player';
-import { v4 } from 'uuid'
-import Game from './game/game';
-import type { SendHand } from './dtos/send-hand';
-import type { Move } from './dtos/move';
-import { availableContracts } from './game/phases/bidding';
+import express from "express";
+import { createServer } from "node:http";
+import { Server } from "socket.io";
+import { v4 } from "uuid";
+import type { Move } from "./dtos/move";
+import { initNats } from "./nats-client";
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-let games: Game[] = [];
+let sendMessage: (topic: string, data: any) => void;
 
-io.on('connection', (socket) => {
-  socket.on("register", (playerId: string | null) => {
-    let game = games.find((g) => g.state.id === "demo");
-    if (!game) {
-      game = new Game("demo");
+async function start() {
+  // Step 1: connect to NATS
+  const nats = await initNats();
+  sendMessage = nats.sendMessage;
+  console.log("NATS ready");
 
-      // Subscribe to game events
-      game.on((event) => {
-        console.log("[EVENT]", event.type);
-        switch (event.type) {
-          case "SEND_CARDS":
-            for (const player of event.payload) {
-              const data: SendHand = {
-                myId: player.playerId,
-                hand: player.cards,
-                players: game!.state.players.map((p) => ({ id: p.playerId, handLength: p.cards.length })),
-              };
-              io.to(player.socketId).emit("send_cards", data);
-            }
-            break;
+  // Step 2: handle client connections
+  io.on("connection", (socket) => {
+    console.log("Client connected:", socket.id);
 
-          case "BIDDING_TURN":
-            io.to(event.payload.socketId).emit("bidding_turn", event.payload.availableContracts);
-            break;
+    socket.on("register", (playerId: string | null) => {
+      const newId = playerId || v4();
 
-          case "BID_PLACED":
-            io.to("demo").emit("bid_placed", event.payload);
-            break;
+      // Tell the game service a player has joined
+      sendMessage("game.register", { playerId: newId, socketId: socket.id });
 
-          case "BIDDING_FINISHED":
-            io.to("demo").emit("bidding_finished", event.payload);
-            break;
-
-          case "PLAYING_TURN":
-            io.to(event.payload.socketId).emit("playing_turn");
-            break;
-
-          case "MOVE_PLAYED":
-            io.to("demo").emit("move_played", event.payload);
-            break;
-
-          case "TRICK_FINISHED":
-            io.to("demo").emit("trick_finished", event.payload);
-            break;
-
-          case "ROUND_FINISHED":
-            io.to("demo").emit("round_finished", event.payload);
-            break;
-        }
-      });
-
-      games.push(game);
-    }
-
-    socket.join("demo");
-
-    let player = game.state.players.find(p => p.playerId === playerId);
-
-    if (playerId && player) { // If player refreshed their page
-      console.log("[INFO] Returning player:", playerId);
-      let handData: SendHand = { myId: playerId, hand: player.cards, players: []}
-      game.state.players.forEach(p => {
-        handData.players.push({ id: p.playerId, handLength: p.cards.length });
-      });
-
-      io.to(socket.id).emit("send_cards", handData);
-      io.to(socket.id).emit("send_trick", game.state.currentTrick);
-      if (game.state.players[game.state.currentPlayerIndex].playerId === playerId) {
-        if (game.state.phase === "BIDDING")
-          io.to(socket.id).emit("bidding_turn", availableContracts(game.state));
-        else if (game.state.phase === "PLAYING")
-          io.to(socket.id).emit("playing_turn");
-      }
-      game.reassignClientId(playerId, socket.id);
-      return;
-    }
-
-    // New player
-    const newId = v4();
-    player = new Player(socket.id, newId);
-    
-    try {
-      const playerCount = game.addPlayer(player);
       socket.emit("assigned_id", newId);
-      console.log("[INFO] New player:", newId);
+      socket.join("demo");
+    });
 
-      if (playerCount === 4) { // 4 players have joined. Ready to launch game        
-        game.start();
-      }
-    } catch (e) {
-      console.log((e as Error).message);
+    socket.on("select_contract", (data) => {
+      sendMessage("game.bid", data);
+    });
+
+    socket.on("play_move", (data: Move) => {
+      sendMessage("game.move", data);
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`[INFO] ${socket.id} disconnected`);
+      sendMessage("game.disconnect", { socketId: socket.id });
+    });
+  });
+
+  // Step 3: listen for events from the game service
+  nats.subscribe("game.event", (msg: any) => {
+    const event = JSON.parse(msg);
+    console.log("[EVENT]", event.type);
+
+    switch (event.type) {
+      case "SEND_CARDS":
+        for (const player of event.payload) {
+          const data = {
+            myId: player.playerId,
+            hand: player.cards,
+            players: event.payload.map((p: any) => ({ id: p.playerId, handLength: p.cards.length })),
+          };
+          io.to(player.socketId).emit("send_cards", data);
+        }
+        break;
+
+      case "BIDDING_TURN":
+        io.to(event.payload.socketId).emit("bidding_turn", event.payload.availableContracts);
+        break;
+
+      case "BID_PLACED":
+        io.to("demo").emit("bid_placed", event.payload);
+        break;
+
+      case "BIDDING_FINISHED":
+        io.to("demo").emit("bidding_finished", event.payload);
+        break;
+
+      case "PLAYING_TURN":
+        io.to(event.payload.socketId).emit("playing_turn");
+        break;
+
+      case "MOVE_PLAYED":
+        io.to("demo").emit("move_played", event.payload);
+        break;
+
+      case "TRICK_FINISHED":
+        io.to("demo").emit("trick_finished");
+        break;
+
+      case "ROUND_FINISHED":
+        io.to("demo").emit("round_finished", event.payload);
+        break;
     }
   });
 
-  // Players making their bid / contract
-  socket.on("select_contract", (data: { playerId: string; contract: string }) => {
-    const game = games.find((g) => g.state.id === "demo");
-    if (!game) return;
-
-    try {
-      game.handleBidInput(data);
-    } catch (e: any) {
-      console.log("[ERROR]", e.message)
-    }
+  // Step 4: start HTTP server
+  server.listen(3000, () => {
+    console.log("Server running on http://localhost:3000");
   });
+}
 
-  // Players playing a card / trick
-  socket.on("play_move", (data: Move) => {
-    const game = games.find((g) => g.state.id === "demo");
-    if (!game) return;
-
-    try {
-      game.handleMoveInput(data);
-    } catch (e: any) {
-      console.log("[ERROR]", e.message)
-    }
-  });
-  
-  socket.on("disconnect", () => {
-    // clientRepo.remove(player);
-    console.log(`[INFO] ${socket.id} disconnected`);
-  });
-});
-
-server.listen(3000, () => {
-  console.log("server running at http://localhost:3000");
-});
+start().catch((err) => console.error("[FATAL]", err));

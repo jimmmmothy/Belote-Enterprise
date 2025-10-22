@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  # --- NATS Broker ---
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"   # main NATS connection port
+      - "8222:8222"   # monitoring UI
+    command: ["-js"]  # enables JetStream (for persistence if needed)
+
+  # --- Game Microservice ---
+  game-service:
+    build: ./game-service
+    container_name: game-service
+    depends_on:
+      - nats
+    environment:
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./game-service:/app
+
+  # --- Main Server ---
+  server:
+    build: ./server
+    container_name: main-server
+    depends_on:
+      - nats
+    environment:
+      - NATS_URL=nats://nats:4222
+    ports:
+      - "3000:3000"   # backend port
+    volumes:
+      - ./server:/app
+
+  # --- React Client ---
+  client:
+    build: ./belote-client
+    container_name: react-client
+    depends_on:
+      - server
+    ports:
+      - "5173:80"   # vite dev server
+    volumes:
+      - ./client:/app

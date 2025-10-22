@@ -1,8 +1,9 @@
 import type { Card, GameState } from "../types";
 import type { Move } from "../../dtos/move";
 import Player from "../player";
+import { setTimeout } from "node:timers/promises";
 
-const TrumpOrder : Record<string, number> = {
+const TrumpOrder: Record<string, number> = {
   '7': 0,
   '8': 1,
   'Q': 2,
@@ -13,7 +14,18 @@ const TrumpOrder : Record<string, number> = {
   'J': 7
 }
 
-const RegularOrder : Record<string, number> = {
+const TrumpScore: Record<string, number> = {
+  '7': 0,
+  '8': 0,
+  'Q': 3,
+  'K': 4,
+  '10': 10,
+  'A': 11,
+  '9': 14,
+  'J': 20
+}
+
+const RegularOrder: Record<string, number> = {
   '7': 0,
   '8': 1,
   '9': 2,
@@ -24,19 +36,30 @@ const RegularOrder : Record<string, number> = {
   'A': 7
 }
 
+const RegularScore: Record<string, number> = {
+  '7': 0,
+  '8': 0,
+  '9': 0,
+  'J': 2,
+  'Q': 3,
+  'K': 4,
+  '10': 10,
+  'A': 11
+}
+
 export function startPlayingPhase(state: GameState, emit: Function): GameState {
   emit({
-    type: "PLAYING_STARTED", 
+    type: "PLAYING_STARTED",
     payload: {}
   });
   state.dealer.secondDeal(state.players);
   emit({
-    type: "SEND_CARDS", 
+    type: "SEND_CARDS",
     payload: state.players
   });
   const firstPlayer = state.players[state.currentPlayerIndex];
   emit({
-    type: "PLAYING_TURN", 
+    type: "PLAYING_TURN",
     payload: { socketId: firstPlayer.socketId }
   });
   return { ...state, phase: "PLAYING", currentTrick: [] };
@@ -52,7 +75,7 @@ export function handleMove(state: GameState, move: Move, emit: Function): GameSt
   // Validate move
   if (!isValidMove(state, move)) {
     emit({
-      type: "PLAYING_TURN", 
+      type: "PLAYING_TURN",
       payload: { socketId: player.socketId }
     });
     throw Error("Invalid move"); // maybe also emit event to let player know its not possible
@@ -66,17 +89,45 @@ export function handleMove(state: GameState, move: Move, emit: Function): GameSt
   });
 
   if (newTrick.length === 4) {
+    let winner = state.players.find(p => p.playerId === getTrickWinningCard(state.currentTrick, state.highestContract, state).playerId);
+    if (!winner)
+      throw Error("Couldn't identify winner of this trick");
+    
+    switch (winner.team) {
+      case "team 0":
+        state.score.team0 += calculateTrickScore(state.currentTrick, state.highestContract);
+        break;
+      case "team 1":
+        state.score.team1 += calculateTrickScore(state.currentTrick, state.highestContract);
+        break;
+      default:
+        throw Error("Couldn't identify team of this trick's winner");
+    }
+
+    let winnerIndex;
+    for (let i = 0; i < state.players.length; i++) {
+      if (winner.playerId === state.players[i].playerId)
+        winnerIndex = i;
+    }
+
+    setTimeout(1000); // Sleep 1 sec to allow users to see whats happening
     emit({
-        type: "TRICK_FINISHED", 
-        payload: { trick: newTrick }
+      type: "PLAYING_TURN",
+      payload: { socketId: winner.socketId }
     });
-    return { ...state, currentTrick: [] }; // gonna handle scoring here later
+    emit({
+      type: "TRICK_FINISHED",
+    });
+
+    console.log("[INFO] Current score:", state.score);
+
+    return { ...state, currentPlayerIndex: winnerIndex!, currentTrick: [] };
   }
 
   const nextPlayerIndex = (state.currentPlayerIndex + 1) % 4;
   const nextPlayer = state.players[nextPlayerIndex];
   emit({
-    type: "PLAYING_TURN", 
+    type: "PLAYING_TURN",
     payload: { socketId: nextPlayer.socketId }
   });
 
@@ -85,6 +136,21 @@ export function handleMove(state: GameState, move: Move, emit: Function): GameSt
     currentPlayerIndex: nextPlayerIndex,
     currentTrick: newTrick,
   };
+}
+
+function calculateTrickScore(trick: Move[], contract: string): number {
+  let score = 0;
+
+  trick.forEach(m => {
+    if (m.suit.toLowerCase() === contract.toLowerCase() || contract.toLowerCase() === "all trumps") {
+      score += TrumpScore[m.rank];
+    }
+    else {
+      score += RegularScore[m.rank];
+    }
+  });
+
+  return score;
 }
 
 function isValidMove(state: GameState, move: Move): boolean {
@@ -247,45 +313,6 @@ function getTrickWinningCard(trick: Move[], highestContract: string, state: Game
   }
   return winner;
 }
-
-// function getCurrentTrickWinner(state: GameState): string {
-//   if (state.currentTrick.length === 0) return 'None';
-
-//   const firstCard = state.currentTrick[0];
-//   let currWinner = { playerId: 'None', suit: firstCard.suit, rank: firstCard.rank };
-//   for (let i = 0; i < state.currentTrick.length; i++ ) {
-//     if (state.highestContract === 'No Trumps') {
-//       if (state.currentTrick[i].suit === firstCard.suit && RegularOrder[state.currentTrick[i].rank] > RegularOrder[currWinner.rank]) {
-//         currWinner = state.currentTrick[i];
-//       }
-//     }
-//     else if (state.highestContract === 'All Trumps') {
-//       if (state.currentTrick[i].suit === firstCard.suit && TrumpOrder[state.currentTrick[i].rank] > TrumpOrder[currWinner.rank]) {
-//         currWinner = state.currentTrick[i];
-//       }
-//     }
-//     else {
-//       if (firstCard.suit !== state.highestContract) {
-//         if (state.currentTrick[i].suit === firstCard.suit && currWinner.suit === firstCard.suit && RegularOrder[state.currentTrick[i].rank] > RegularOrder[currWinner.rank]) {
-//           currWinner = state.currentTrick[i];
-//         }
-//         else if (state.currentTrick[i].suit === state.highestContract && currWinner.suit === state.highestContract && TrumpOrder[state.currentTrick[i].rank] > TrumpOrder[currWinner.rank]) {
-//           currWinner = state.currentTrick[i];
-//         }
-//         else if (state.currentTrick[i].suit === state.highestContract && currWinner.suit !== state.highestContract) {
-//           currWinner = state.currentTrick[i];
-//         }
-//       }
-//       else {
-//         if (state.currentTrick[i].suit === firstCard.suit && TrumpOrder[state.currentTrick[i].rank] > TrumpOrder[currWinner.rank]) {
-//           currWinner = state.currentTrick[i];
-//         }
-//       }
-//     }
-//   }
-
-//   return currWinner.playerId;
-// }
 
 function compareCards(a: Move, b: Move, contract: string, state: GameState): number {
   const isAllTrumps = contract.toLowerCase() === 'all trumps';

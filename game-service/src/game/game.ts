@@ -41,6 +41,10 @@ export default class Game {
           highestContract: "Pass",
           bids: new Map(),
           currentTrick: [],
+          score: {
+            team0: 0,
+            team1: 0,
+          }
         };
     }       
 
@@ -67,8 +71,6 @@ export default class Game {
         if (player)
             player.socketId = clientId;
     }
-
-    getState = () => this.state;
 
     start() {
       this.state.dealer.firstDeal(this.state.players);

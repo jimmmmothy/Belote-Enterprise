@@ -56,7 +56,15 @@ function App() {
             ? { ...p, handLength: Math.max(0, p.handLength - 1) }
             : p
         ),
-        hand: move.playerId === PLAYER_ID ? prev.hand.filter(card => !(card.suit === move.suit && card.rank === move.rank)) : prev.hand
+        // I wanted to use PLAYER_ID constant thats declared on top but it isn't recognized here always
+        hand: move.playerId === sessionStorage.getItem("playerId") ? prev.hand.filter(card => !(card.suit === move.suit && card.rank === move.rank)) : prev.hand
+      }));
+    });
+
+    socket.on("trick_finished", () => {
+      setTableProps(prev => ({
+        ...prev,
+        trick: []
       }));
     });
 

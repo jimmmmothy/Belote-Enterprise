@@ -63,11 +63,6 @@ export function handleBid(state: GameState, playerId: string, contract: string, 
 
 function finishBiddingPhase(state: GameState, emit: Function): GameState {
   if (state.highestContract === "Pass") {
-    // this dont work
-    // emit({
-    //     type: "ROUND_RESTART", 
-    //     payload: {}
-    // });
     state.players.forEach(p => p.cards = []);
     state.dealer.shuffle();
     state.dealer.firstDeal(state.players);
@@ -82,5 +77,6 @@ function finishBiddingPhase(state: GameState, emit: Function): GameState {
     type: "BIDDING_FINISHED",
     payload: { highestContract: state.highestContract }
   });
+  state.currentPlayerIndex = 0;
   return startPlayingPhase(state, emit);
 }
