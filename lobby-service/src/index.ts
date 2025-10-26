@@ -7,25 +7,20 @@ const prisma = new PrismaClient();
 async function start() {
   const nats = await initNats();
 
-  nats.subscribe("lobby.getAll", async (msg, reply) => {
+  nats.subscribe("lobby.getAll", async (_msg, reply) => {
     const lobbies = await prisma.lobby.findMany();
     if (reply) nats.sendMessage(reply, { lobbies });
   });
 
-  nats.subscribe("lobby.create", async (msg) => {
+  nats.subscribe("lobby.create", async (msg, reply) => {
     const { id, name, playerId, playerName } = JSON.parse(msg);
 
     try {
       await prisma.$transaction(async (prisma: any) => {
-        const lobby = await prisma.lobby.create({
-          data: { id: id, name: name },
-        });
+        await prisma.lobby.create({ data: { id: id, name: name } });
+        await prisma.lobbyPlayer.create({ data: { id: v4(), lobbyId: id, playerId: playerId, name: playerName } });
 
-        const player = await prisma.lobbyPlayer.create({
-          data: { id: v4(), lobbyId: lobby.id, playerId: playerId, name: playerName },
-        });
-
-        console.log("[DB] Lobby and first player created:", lobby, player);
+        if (reply) nats.sendMessage(reply, { success: true, id })
       });
     } catch (err) {
       console.error("[ERROR] Failed to create lobby or player", err);
@@ -43,6 +38,17 @@ async function start() {
     } else {
       if (reply) nats.sendMessage(reply, { success: false, error: "Lobby full" });
     }
+  });
+
+  nats.subscribe("lobby.delete", async (msg, reply) => {
+    const { id } = JSON.parse(msg);
+
+    await prisma.$transaction(async (prisma) => {
+      await prisma.lobby.delete({ where: { id }});
+      await prisma.lobbyPlayer.deleteMany({ where: { lobbyId: id }});
+
+      if (reply) nats.sendMessage(reply, { success: true });
+    })
   });
 }
 

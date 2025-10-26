@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Card } from "./Card.tsx";
 import "./Table.css";
-import type { CardProps, Move, TableProps } from "./types.ts";
+import type { CardProps, Move, TableProps } from "../types.ts";
 
 export function Table({ myId, hand, players, contracts, trick, myTurn, onSelectContract, onPlayMove }: TableProps & {
   onSelectContract: (playerId: string, contract: string) => void,

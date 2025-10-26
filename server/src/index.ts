@@ -7,6 +7,12 @@ import { initNats } from "./nats-client";
 
 const app = express();
 app.use(express.json());
+app.use(function (req, res, next) { // CORS stuff
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader('Access-Control-Allow-Methods', '*');
+  res.setHeader("Access-Control-Allow-Headers", "*");
+  next();
+});
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
@@ -27,7 +33,7 @@ initNats()
   .catch(err => console.log("[ERROR] NATS connection error:", err));
 
 
-app.get("/lobbies", async (req, res) => {
+app.get("/lobbies", async (_req, res) => {
   try {
     const result = await nats.request("lobby.getAll", {});
     res.json(result.lobbies);
@@ -40,8 +46,10 @@ app.post("/lobbies", async (req, res) => {
   const { lobbyName, playerName, playerId } = req.body;
   const lobbyId = v4();
 
-  nats.sendMessage("lobby.create", { id: lobbyId, name: lobbyName, playerId, playerName });
-  res.status(201).json({ id: lobbyId });
+  const result = nats.request("lobby.create", { id: lobbyId, name: lobbyName, playerId, playerName });
+  if (result.success) {
+    res.status(201).json({ id: result.id });
+  }
 });
 
 app.post("/lobbies/:id/join", async (req, res) => {
@@ -57,6 +65,15 @@ app.post("/lobbies/:id/join", async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ error: "Failed to join lobby" });
+  }
+});
+
+app.delete("/lobbies/:id", async (req, res) => {
+  const lobbyId = req.params.id;
+
+  const result = nats.request("lobby.delete", { id: lobbyId });
+  if (result.success) {
+    res.status(200);
   }
 });
 

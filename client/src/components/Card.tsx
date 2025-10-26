@@ -1,5 +1,5 @@
 import './Card.css'
-import type { CardProps } from './types';
+import type { CardProps } from '../types';
 import { motion, useMotionValue, animate } from "framer-motion";
 import { useState } from 'react';
 
