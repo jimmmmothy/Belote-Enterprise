@@ -17,29 +17,57 @@ services:
       - nats
     environment:
       - NATS_URL=nats://nats:4222
-    volumes:
-      - ./game-service:/app
+    # volumes:
+    #   - ./game-service:/app
+
+  # --- Lobby Mircroservice ---
+  lobby-service:
+    build: ./lobby-service
+    container_name: lobby-service
+    depends_on:
+      - nats
+      - postgres
+    environment:
+      - NATS_URL=nats://nats:4222
+      - LOBBY_DATABASE_URL=postgresql://postgres:admin@postgres:5432/belote-lobbies
+    # volumes:
+    #   - ./lobby-service:/app
 
   # --- Main Server ---
   server:
     build: ./server
-    container_name: main-server
+    container_name: server
     depends_on:
       - nats
     environment:
       - NATS_URL=nats://nats:4222
     ports:
       - "3000:3000"   # backend port
-    volumes:
-      - ./server:/app
+    # volumes:
+    #   - ./server:/app
 
   # --- React Client ---
   client:
-    build: ./belote-client
-    container_name: react-client
+    build: ./client
+    container_name: client
     depends_on:
       - server
     ports:
       - "5173:80"   # vite dev server
+    # volumes:
+    #   - ./client:/app
+  
+  postgres:
+    image: postgres:latest
+    container_name: lobbies-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: belote-lobbies
+    ports:
+      - "5432:5432"
     volumes:
-      - ./client:/app
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

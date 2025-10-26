@@ -6,42 +6,89 @@ import type { Move } from "./dtos/move";
 import { initNats } from "./nats-client";
 
 const app = express();
+app.use(express.json());
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-let sendMessage: (topic: string, data: any) => void;
+let nats: {
+  sendMessage: (topic: string, data: any) => void;
+  subscribe: (topic: string, callback: (msg: string) => void) => void;
+  request: (topic: string, data: any, timeout?: number) => any;
+};
+
+initNats()
+  .then(r => {
+    nats = r;
+    console.log("NATS ready");
+  })
+  .then(() => {
+    start().catch((err) => console.error("[FATAL]", err));
+  })
+  .catch(err => console.log("[ERROR] NATS connection error:", err));
+
+
+app.get("/lobbies", async (req, res) => {
+  try {
+    const result = await nats.request("lobby.getAll", {});
+    res.json(result.lobbies);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch lobbies" });
+  }
+});
+
+app.post("/lobbies", async (req, res) => {
+  const { lobbyName, playerName, playerId } = req.body;
+  const lobbyId = v4();
+
+  nats.sendMessage("lobby.create", { id: lobbyId, name: lobbyName, playerId, playerName });
+  res.status(201).json({ id: lobbyId });
+});
+
+app.post("/lobbies/:id/join", async (req, res) => {
+  const { playerId, playerName } = req.body;
+  const lobbyId = req.params.id;
+
+  try {
+    const result = await nats.request("lobby.join", { lobbyId, playerId, playerName });
+    if (result.success) {
+      res.status(200).json({ player: result.player });
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (err) {
+    res.status(500).json({ error: "Failed to join lobby" });
+  }
+});
 
 async function start() {
-  // Step 1: connect to NATS
-  const nats = await initNats();
-  sendMessage = nats.sendMessage;
-  console.log("NATS ready");
-
-  // Step 2: handle client connections
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
+
+    socket.on("join_lobby", (data: { lobbyId: string, playerId: string }) => {
+      nats.sendMessage("lobby.join", { ...data, socketId: socket.id });
+    });
 
     socket.on("register", (playerId: string | null) => {
       const newId = playerId || v4();
 
       // Tell the game service a player has joined
-      sendMessage("game.register", { playerId: newId, socketId: socket.id });
+      nats.sendMessage("game.register", { playerId: newId, socketId: socket.id });
 
       socket.emit("assigned_id", newId);
       socket.join("demo");
     });
 
     socket.on("select_contract", (data) => {
-      sendMessage("game.bid", data);
+      nats.sendMessage("game.bid", data);
     });
 
     socket.on("play_move", (data: Move) => {
-      sendMessage("game.move", data);
+      nats.sendMessage("game.move", data);
     });
 
     socket.on("disconnect", () => {
       console.log(`[INFO] ${socket.id} disconnected`);
-      sendMessage("game.disconnect", { socketId: socket.id });
+      nats.sendMessage("game.disconnect", { socketId: socket.id });
     });
   });
 
@@ -96,6 +143,6 @@ async function start() {
   server.listen(3000, () => {
     console.log("Server running on http://localhost:3000");
   });
-}
 
-start().catch((err) => console.error("[FATAL]", err));
+  
+}

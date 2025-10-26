@@ -1,6 +1,74 @@
 # Architecture Choices Report
 
-## Current Architecture (as of 16.10.2025)
+## Architecture Update (23.10.2025)
+I have migrated to a basic-level microservice architecture.
+
+### NATS
+To enable communication between different services, I introduced NATS — a lightweight and high-performance messaging system.
+It serves as the backbone for event-based communication between the main server and the game service.
+
+The main advantages of using NATS are:
+- Decoupling: Services no longer need to know about each other’s existence; they simply publish or subscribe to relevant topics.
+- Scalability: Each service can be scaled independently without affecting others.
+- Simplicity: NATS is easy to configure and fast enough for real-time updates, which suits my project’s requirements perfectly.
+
+**Topics**
+- `game.move` – published by the main server when a player performs an action.
+- `game.result` – published by the game service once a move has been processed.
+- `test` – used for basic connectivity and debugging. 
+
+The message payloads are encoded using JSON and sent as strings through the StringCodec from the NATS client library.
+
+### Game Service
+Due to my planning, I have successfully created a microservice handling the game logic which was previously a part of the monolith structure of the server application. The internal logic is exactly the same as before, keeping the same structure, with just a few differences.
+- **New Structure**
+  - `src/`
+    - `dtos/`
+      - `move.ts`
+      - `send-hand.ts`
+    - `game/`
+      - `phases/`
+        - `playing.ts` 
+        - `bidding.ts` 
+      - `dealer.ts`
+      - `game.ts`
+      - `player.ts`
+      - `types.ts`
+    - `index.ts` - logic handling the communication with the NATS message software
+    - `nats-client.ts` - helper functions to publish and subscribe to topics
+
+**Events** <br>
+In my last update I changed the handling of events. This has payed off now that I have changed the communication proccess between the game logic and the server logic.
+
+### Server
+The main server now acts primarily as an API gateway and orchestrator.
+
+- **New Structure**
+  - `src/`
+    - `dtos/`
+      - `move.ts`
+    - `index.ts` - logic handling the communication with the NATS message software
+    - `nats-client.ts` - helper functions to publish and subscribe to topics
+
+It is responsible for:
+- Managing player connections and game rooms.
+- Receiving client actions (e.g., moves) through socket events or HTTP endpoints.
+- Publishing these actions to the game.move topic in NATS.
+- Subscribing to game.result to receive updates from the game service and forward them to clients.
+
+The migration required minimal refactoring in the server code.
+Most of the changes were related to:
+- Removing direct imports of the game logic files.
+- Implementing the NATS client initialization to handle message publishing and subscriptions.
+- Adjusting event flows so that socket.io now reacts to NATS messages rather than local function calls.
+
+This separation has made the codebase cleaner, more modular, and easier to maintain.
+It also opens up possibilities for adding more services in the future, such as analytics or player management, without modifying the core game logic.
+
+**Player connections and game rooms** <br>
+As mentioned above, this step is currently handled in the server application. Soon I will delegate that to a Lobby microservice. The point will be to easily be able to create multiple games, adding horizontal scalability and the ability to be load tested.
+
+## Architecture Update (16.10.2025)
 I have updated the architecture of the applications, most notably the server.
 
 ### Server
@@ -36,7 +104,7 @@ There have been no major changes to the client. Only minor updates and tweaks to
 ### Extra
 The architectural pattern is still of a monolithic client-server application. The eventual shift to microservices is approaching steadily at a rapid pace. Once the game is playable *enough*, I will apply the "Strangler" design pattern for migration. For a brief moment in time during development, both my microservice and monolith architecture will exist until stability can be guaranteed, at which point full migration can occur.
 
-## Outdated Architecture (as of 05.10.2025)
+## Architecture Update (05.10.2025)
 
 ### Overview
 The project is currently structured as a **monorepo** with two main components:

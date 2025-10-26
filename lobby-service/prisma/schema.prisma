@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("LOBBY_DATABASE_URL")
+}
+
+model Lobby {
+  id          String    @id @default(uuid())
+  name        String
+  maxPlayers  Int       @default(4)
+  createdAt   DateTime  @default(now())
+  status      String    @default("open") // open, full, started, closed
+  players     LobbyPlayer[]
+}
+
+model LobbyPlayer {
+  id        String   @id @default(uuid())
+  lobby     Lobby    @relation(fields: [lobbyId], references: [id])
+  lobbyId   String
+  playerId  String
+  socketId  String?
+  name      String?
+  joinedAt  DateTime @default(now())
+
+  @@index([lobbyId])
+}
+

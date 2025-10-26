@@ -1,6 +1,7 @@
 *.odt
 node_modules/
 .env
+generated/
 
 # Logs
 logs
