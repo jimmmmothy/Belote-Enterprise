@@ -18,6 +18,7 @@ type GameEventName =
 
 interface GameEvent<T = any> {
   type: GameEventName;
+  recepient?: string;
   payload: T;
 }
 
@@ -73,6 +74,7 @@ export default class Game {
     }
 
     start() {
+      console.log("[DEBUG] game.start()");
       this.state.dealer.firstDeal(this.state.players);
       this.emit({ type: "SEND_CARDS", payload: this.state.players });
         

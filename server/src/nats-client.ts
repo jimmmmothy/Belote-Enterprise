@@ -4,7 +4,7 @@ const sc = StringCodec();
 
 export async function initNats() {
   const nc = await connect({ servers: process.env.NATS_URL });
-  console.log("Game service connected to NATS");
+  console.log("Server connected to NATS");
 
   function sendMessage(topic: string, data: any) {
     nc.publish(topic, sc.encode(JSON.stringify(data)));
@@ -15,7 +15,6 @@ export async function initNats() {
     (async () => {
       for await (const m of sub) {
         callback(sc.decode(m.data), m.reply);
-        console.log("[EVENT] Recieved:", sc.decode(m.data));
       }
     })();
   }

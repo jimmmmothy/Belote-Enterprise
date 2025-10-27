@@ -5,13 +5,12 @@ import axios from "axios";
 import "./Lobby.css";
 
 export default function Lobby() {
-  const [lobbies, setLobbies] = useState<{ id: string; name: string }[]>([]);
+  const [lobbies, setLobbies] = useState<{ id: string; name: string; status: string }[]>([]);
   const [lobbyName, setLobbyName] = useState("");
   const [playerName, setPlayerName] = useState("");
   const navigate = useNavigate();
 
   async function fetchLobbies() {
-    // const res = await fetch(`${SERVER_URL}/lobbies`);
     const res = await axios.get(`${SERVER_URL}/lobbies`);
     const data = res.data;
     console.log("Fetched lobbies:", data);
@@ -19,36 +18,22 @@ export default function Lobby() {
   }
 
   async function createLobby() {
-    const playerId = sessionStorage.getItem("playerId") ?? crypto.randomUUID();
-    sessionStorage.setItem("playerId", playerId);
-
-    // const res = await fetch(`${SERVER_URL}/lobbies`, {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ lobbyName, playerName, playerId }),
-    // });
-
-    const res = await axios.post(`${SERVER_URL}/lobbies`, { lobbyName, playerName, playerId });
+    const res = await axios.post(`${SERVER_URL}/lobbies`, { lobbyName, playerName });
     const data = res.data;
 
-    sessionStorage.setItem("lobbyId", data.id);
+    sessionStorage.setItem("lobbyId", data.lobbyId);
+    sessionStorage.setItem("playerId", data.playerId);
     navigate("/game");
   }
 
   async function joinLobby(lobbyId: string) {
-    const playerId = sessionStorage.getItem("playerId") ?? crypto.randomUUID();
-    sessionStorage.setItem("playerId", playerId);
-
-    const res = await fetch(`${SERVER_URL}/lobbies/${lobbyId}/join`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerName, playerId }),
-    });
-
-    const data = await res.json();
+    const res = await axios.post(`${SERVER_URL}/lobbies/${lobbyId}/join`, { playerName });
+    const data = res.data;
+    
     if (data.error) alert(data.error);
     else {
       sessionStorage.setItem("lobbyId", lobbyId);
+      sessionStorage.setItem("playerId", data.playerId);
       navigate("/game");
     }
   }
@@ -71,6 +56,7 @@ export default function Lobby() {
         {lobbies ? lobbies.map(l =>
           <div className="lobby-item" onClick={() => joinLobby(l.id)}>
             <span>{l.name}</span>
+            <span>{l.status}</span>
           </div>
         ) : (
           <p>It's empty here...</p>

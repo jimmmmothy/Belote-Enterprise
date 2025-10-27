@@ -8,14 +8,19 @@ const socket = io(SERVER_URL);
 
 export default function GamePage() {
   const [tableProps, setTableProps] = useState<TableProps>({ myId: "", hand: [], players: [], myTurn: false });
+  const [logs, setLogs] = useState<string[]>([]);
   const playerId = sessionStorage.getItem("playerId");
   const lobbyId = sessionStorage.getItem("lobbyId");
 
   useEffect(() => {
-    socket.emit("register", playerId);
+    socket.emit("register", {lobbyId, playerId});
 
     socket.on("assigned_id", (id) => {
       sessionStorage.setItem("playerId", id);
+    });
+
+    socket.on("player_joined", (playerName) => {
+      setLogs((prev) => [...prev, `${playerName} has joined the lobby.`]);
     });
 
     socket.on("send_cards", (data: ReceiveHand) => setTableProps((prev) => ({ ...prev, ...data })));
@@ -44,27 +49,34 @@ export default function GamePage() {
   }, [playerId, lobbyId]);
 
   const selectContract = (playerId: string, contract: string) => {
-    socket.emit("select_contract", { playerId, contract });
+    socket.emit("select_contract", { gameId: lobbyId, playerId, contract });
     setTableProps((prev) => ({ ...prev, myTurn: false, contracts: undefined }));
   };
 
   const playMove = (move: Move) => {
-    socket.emit("play_move", move);
+    socket.emit("play_move", { gameId: lobbyId, move });
     setTableProps((prev) => ({ ...prev, myTurn: false }));
   };
 
   return (
-    <div className="game-container">
-      <Table
-        myTurn={tableProps.myTurn}
-        contracts={tableProps.contracts}
-        myId={tableProps.myId}
-        hand={tableProps.hand}
-        players={tableProps.players}
-        trick={tableProps.trick}
-        onSelectContract={selectContract}
-        onPlayMove={playMove}
-      />
-    </div>
+    <>
+      <div className="game-container">
+        <Table
+          myTurn={tableProps.myTurn}
+          contracts={tableProps.contracts}
+          myId={tableProps.myId}
+          hand={tableProps.hand}
+          players={tableProps.players}
+          trick={tableProps.trick}
+          onSelectContract={selectContract}
+          onPlayMove={playMove}
+        />
+      </div>
+      <div className="chat-log">
+        {logs.map((log, i) => (
+          <div key={i}>{log}</div>
+        ))}
+      </div>
+    </>
   );
 }

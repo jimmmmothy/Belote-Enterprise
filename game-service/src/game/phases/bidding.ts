@@ -19,10 +19,8 @@ function askNextPlayer(state: GameState, emit: Function) {
   const player = state.players[state.currentPlayerIndex];
   emit({ 
     type: "BIDDING_TURN", 
-    payload: {
-        socketId: player.socketId,
-        availableContracts: availableContracts(state),
-    }
+    recepient: player.socketId,
+    payload: availableContracts(state)
   });
 }
 
@@ -46,6 +44,7 @@ export function handleBid(state: GameState, playerId: string, contract: string, 
 
   emit({
     type: "BID_PLACED", 
+    recepient: state.id,
     payload: { playerId, contract }
   });
 
@@ -75,6 +74,7 @@ function finishBiddingPhase(state: GameState, emit: Function): GameState {
 
   emit({
     type: "BIDDING_FINISHED",
+    recepient: state.id,
     payload: { highestContract: state.highestContract }
   });
   state.currentPlayerIndex = 0;

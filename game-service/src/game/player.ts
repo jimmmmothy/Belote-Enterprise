@@ -1,12 +1,12 @@
 import type { Card } from './types';
 
 export default class Player {
-    socketId: string; // id of the socket so the server knows which client to send what data
+    socketId?: string; // id of the socket so the server knows which client to send what data
     playerId: string; // Unique, immutable uuid for each player which persists after refresh
     team: string;
     cards: Card[];
 
-    constructor(socketId: string, playerId: string, team: string) {
+    constructor(playerId: string, team: string, socketId?: string,) {
         this.socketId = socketId;
         this.playerId = playerId;
         this.team = team;

@@ -55,12 +55,12 @@ export function startPlayingPhase(state: GameState, emit: Function): GameState {
   state.dealer.secondDeal(state.players);
   emit({
     type: "SEND_CARDS",
-    payload: state.players
+    payload: state.players,
   });
   const firstPlayer = state.players[state.currentPlayerIndex];
   emit({
     type: "PLAYING_TURN",
-    payload: { socketId: firstPlayer.socketId }
+    recepient: firstPlayer.socketId,
   });
   return { ...state, phase: "PLAYING", currentTrick: [] };
 }
@@ -76,7 +76,8 @@ export function handleMove(state: GameState, move: Move, emit: Function): GameSt
   if (!isValidMove(state, move)) {
     emit({
       type: "PLAYING_TURN",
-      payload: { socketId: player.socketId }
+      recepient: player.socketId,
+      payload: {}
     });
     throw Error("Invalid move"); // maybe also emit event to let player know its not possible
   }
@@ -85,7 +86,9 @@ export function handleMove(state: GameState, move: Move, emit: Function): GameSt
   // player.removeCard({ suit: move.suit, rank: move.rank }); this doesnt affect state.player
   state.players[state.currentPlayerIndex].removeCard({ suit: move.suit, rank: move.rank });
   emit({
-    type: "MOVE_PLAYED", payload: { playerId: move.playerId, suit: move.suit, rank: move.rank }
+    type: "MOVE_PLAYED",
+    recepient: state.id,
+    payload: { playerId: move.playerId, suit: move.suit, rank: move.rank }
   });
 
   if (newTrick.length === 4) {
@@ -113,10 +116,13 @@ export function handleMove(state: GameState, move: Move, emit: Function): GameSt
     setTimeout(1000); // Sleep 1 sec to allow users to see whats happening
     emit({
       type: "PLAYING_TURN",
-      payload: { socketId: winner.socketId }
+      recepient: winner.socketId,
+      payload: {}
     });
     emit({
       type: "TRICK_FINISHED",
+      recepient: state.id,
+      payload: {}
     });
 
     console.log("[INFO] Current score:", state.score);
@@ -128,7 +134,8 @@ export function handleMove(state: GameState, move: Move, emit: Function): GameSt
   const nextPlayer = state.players[nextPlayerIndex];
   emit({
     type: "PLAYING_TURN",
-    payload: { socketId: nextPlayer.socketId }
+    recepient: nextPlayer.socketId,
+    payload: {}
   });
 
   return {

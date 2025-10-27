@@ -1,7 +1,8 @@
 import { useRef } from "react";
 import { Card } from "./Card.tsx";
-import "./Table.css";
+import { Avatar } from "./Avatar.tsx";
 import type { CardProps, Move, TableProps } from "../types.ts";
+import "./Table.css";
 
 export function Table({ myId, hand, players, contracts, trick, myTurn, onSelectContract, onPlayMove }: TableProps & {
   onSelectContract: (playerId: string, contract: string) => void,
@@ -10,27 +11,42 @@ export function Table({ myId, hand, players, contracts, trick, myTurn, onSelectC
   const playAreaRef = useRef<HTMLDivElement>(null);
 
   const handlePlay = (card: { suit: string; rank: string }) => {
-    onPlayMove({playerId: myId, suit: card.suit, rank: card.rank });
+    onPlayMove({ playerId: myId, suit: card.suit, rank: card.rank });
   };
 
   const myIndex = players.findIndex((p) => p.id === myId);
   const ordered = [...players.slice(myIndex), ...players.slice(0, myIndex)];
   const [_bottom, right, top, left] = ordered;
 
+  console.log("Hand:", hand);
+  console.log("Players:", players);
+  console.log("My ID:", myId);
+
   return (
     <div className="table">
       <div className="row top">
-        {top && hand.length > 0 &&
-          Array.from({ length: top.handLength }).map((_, i) => (
-            <Card key={`top-${i}`} suit={"back"} rank={"light"} onPlay={() => {}} playAreaRef={playAreaRef} isPlayable={false} />
-          ))}
+        {top && (
+          <div className="player-slot top-slot">
+            <Avatar name={"North"} />
+            <div className="hand-cards">
+              {Array.from({ length: top.handLength }).map((_, i) => (
+                <Card key={`top-${i}`} suit="back" rank="light" onPlay={() => { }} playAreaRef={playAreaRef} isPlayable={false} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="middle">
         <div className="col left">
-          {left && Array.from({ length: left.handLength }).map((_, i) => (
-            <Card key={`left-${i}`} suit={"back"} rank={"light"} onPlay={() => {}} playAreaRef={playAreaRef} isPlayable={false} />
-          ))}
+          {left && (
+            <div className="player-slot left-slot">
+              <Avatar name={"West"} />
+              {Array.from({ length: left.handLength }).map((_, i) => (
+                <Card key={`left-${i}`} suit="back" rank="light" onPlay={() => { }} playAreaRef={playAreaRef} isPlayable={false} />
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="center-space" ref={playAreaRef}>
@@ -43,19 +59,24 @@ export function Table({ myId, hand, players, contracts, trick, myTurn, onSelectC
                   key={`middle-${i}`}
                   suit={c.suit as CardProps["suit"]}
                   rank={c.rank as CardProps["rank"]}
-                  onPlay={() => {}}
+                  onPlay={() => { }}
                   playAreaRef={playAreaRef}
                   isPlayable={false}
-                  />
+                />
               </div>
             );
           })}
         </div>
 
         <div className="col right">
-          {right && Array.from({ length: right.handLength }).map((_, i) => (
-            <Card key={`right-${i}`} suit={"back"} rank={"light"} onPlay={() => {}} playAreaRef={playAreaRef} isPlayable={false} />
-          ))}
+          {right && (
+            <div className="player-slot right-slot">
+              <Avatar name={"East"} />
+              {Array.from({ length: right.handLength }).map((_, i) => (
+                <Card key={`right-${i}`} suit="back" rank="light" onPlay={() => { }} playAreaRef={playAreaRef} isPlayable={false} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -77,7 +98,7 @@ export function Table({ myId, hand, players, contracts, trick, myTurn, onSelectC
                 rank={c.rank as CardProps["rank"]}
                 onPlay={handlePlay}
                 playAreaRef={playAreaRef}
-                isPlayable={myTurn && !contracts} 
+                isPlayable={myTurn && !contracts}
               />
             </div>
           ))}

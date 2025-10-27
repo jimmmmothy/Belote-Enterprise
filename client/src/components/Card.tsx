@@ -3,7 +3,7 @@ import type { CardProps } from '../types';
 import { motion, useMotionValue, animate } from "framer-motion";
 import { useState } from 'react';
 
-const cardImages = import.meta.glob("./assets/*.png", { eager: true });
+const cardImages = import.meta.glob("../assets/*.png", { eager: true });
 
 export function Card({
   suit,
@@ -16,7 +16,7 @@ export function Card({
   playAreaRef?: React.RefObject<HTMLDivElement | null>;
   isPlayable?: boolean;
 }) {
-  const key = `./assets/${suit}_${rank}.png`;
+  const key = `../assets/${suit}_${rank}.png`;
   const imgSrc = (cardImages[key] as { default: string }).default;
 
   const x = useMotionValue(0);

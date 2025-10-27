@@ -43,23 +43,31 @@ app.get("/lobbies", async (_req, res) => {
 });
 
 app.post("/lobbies", async (req, res) => {
-  const { lobbyName, playerName, playerId } = req.body;
+  const { lobbyName, playerName } = req.body;
   const lobbyId = v4();
+  const playerId = v4();
 
-  const result = nats.request("lobby.create", { id: lobbyId, name: lobbyName, playerId, playerName });
-  if (result.success) {
-    res.status(201).json({ id: result.id });
+  const result = await nats.request("lobby.create", { id: lobbyId, name: lobbyName, playerId, playerName });
+  if (result.success) { // Lobby created
+    // Tell the game service a player has joined
+    nats.sendMessage("game.register", { id: lobbyId, playerId }); // Can also extend to add player name
+
+    res.status(201).json({ lobbyId, playerId });
   }
 });
 
 app.post("/lobbies/:id/join", async (req, res) => {
-  const { playerId, playerName } = req.body;
+  const { playerName } = req.body;
   const lobbyId = req.params.id;
+  const playerId = v4();
 
   try {
     const result = await nats.request("lobby.join", { lobbyId, playerId, playerName });
     if (result.success) {
-      res.status(200).json({ player: result.player });
+      // Tell the game service a player has joined
+      nats.sendMessage("game.register", { id: lobbyId, playerId }); // Can also extend to add player name
+      if (result.full) nats.sendMessage("game.start", { id: lobbyId });
+      res.status(200).json({ full: result.full, playerId });
     } else {
       res.status(400).json({ error: result.error });
     }
@@ -71,9 +79,10 @@ app.post("/lobbies/:id/join", async (req, res) => {
 app.delete("/lobbies/:id", async (req, res) => {
   const lobbyId = req.params.id;
 
-  const result = nats.request("lobby.delete", { id: lobbyId });
+  const result = await nats.request("lobby.delete", { id: lobbyId });
+  console.log("[DEBUG] delete result:", result);
   if (result.success) {
-    res.status(200);
+    res.status(200).json({});
   }
 });
 
@@ -81,18 +90,12 @@ async function start() {
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
 
-    socket.on("join_lobby", (data: { lobbyId: string, playerId: string }) => {
-      nats.sendMessage("lobby.join", { ...data, socketId: socket.id });
-    });
-
-    socket.on("register", (playerId: string | null) => {
-      const newId = playerId || v4();
-
+    socket.on("register", ({ lobbyId, playerId }: { lobbyId: string, playerId: string }) => {
       // Tell the game service a player has joined
-      nats.sendMessage("game.register", { playerId: newId, socketId: socket.id });
+      nats.sendMessage("game.register", { id: lobbyId, playerId, socketId: socket.id });
 
-      socket.emit("assigned_id", newId);
-      socket.join("demo");
+      socket.emit("assigned_id", playerId);
+      socket.join(lobbyId);
     });
 
     socket.on("select_contract", (data) => {
@@ -127,31 +130,32 @@ async function start() {
         break;
 
       case "BIDDING_TURN":
-        io.to(event.payload.socketId).emit("bidding_turn", event.payload.availableContracts);
+        console.log(event);
+        io.to(event.recepient).emit("bidding_turn", event.payload);
         break;
 
       case "BID_PLACED":
-        io.to("demo").emit("bid_placed", event.payload);
+        io.to(event.recepient).emit("bid_placed", event.payload);
         break;
 
       case "BIDDING_FINISHED":
-        io.to("demo").emit("bidding_finished", event.payload);
+        io.to(event.recepient).emit("bidding_finished", event.payload);
         break;
 
       case "PLAYING_TURN":
-        io.to(event.payload.socketId).emit("playing_turn");
+        io.to(event.recepient).emit("playing_turn");
         break;
 
       case "MOVE_PLAYED":
-        io.to("demo").emit("move_played", event.payload);
+        io.to(event.recepient).emit("move_played", event.payload);
         break;
 
       case "TRICK_FINISHED":
-        io.to("demo").emit("trick_finished");
+        io.to(event.recepient).emit("trick_finished");
         break;
 
       case "ROUND_FINISHED":
-        io.to("demo").emit("round_finished", event.payload);
+        io.to(event.recepient).emit("round_finished", event.payload);
         break;
     }
   });
@@ -161,5 +165,5 @@ async function start() {
     console.log("Server running on http://localhost:3000");
   });
 
-  
+
 }

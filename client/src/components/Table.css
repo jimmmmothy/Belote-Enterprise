@@ -111,3 +111,24 @@
   top: 50%;
   transform: translateX(30%) translateY(-50%);
 }
+
+.player-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.top-slot {
+  margin-bottom: 6px;
+}
+
+.left-slot, .right-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hand-cards {
+  display: flex;
+  gap: 4px;
+}
