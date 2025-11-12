@@ -168,7 +168,7 @@ function isValidMove(state: GameState, move: Move): boolean {
   const playerCards = player.cards;
   const trumpSuit = highestContract.toLowerCase() !== 'all trumps' && highestContract.toLowerCase() !== 'no trumps' ? highestContract.toLowerCase() : null;
 
-  // 1️⃣ If first to play — any card allowed
+  // If first to play — any card allowed
   if (currentTrick.length === 0) return true;
 
   const leadCard = currentTrick[0];
@@ -194,7 +194,7 @@ function isValidMove(state: GameState, move: Move): boolean {
     return true;
   }
 
-  // 3.1 If can follow suit
+  // If can follow suit
   if (hasSuit(playerCards, leadSuit)) {
     if (move.suit !== leadSuit) return false;
 
@@ -207,14 +207,14 @@ function isValidMove(state: GameState, move: Move): boolean {
     return true;
   }
 
-  // 3.2 Cannot follow suit → check for trumps
+  // Cannot follow suit → check for trumps
   if (trumpSuit && hasTrump(playerCards, trumpSuit)) {
     const trumpsOnTable = currentTrick.filter(c => c.suit === trumpSuit);
     const highestTrumpOnTable = trumpsOnTable.length > 0
       ? getTrickWinningCard(trumpsOnTable, highestContract, state)
       : undefined;
 
-    // 3.2.1 If trumps already played
+    // If trumps already played
     if (highestTrumpOnTable) {
       const myHigherTrumps = playerCards.filter(
         c => c.suit === trumpSuit && isRaise(c, highestTrumpOnTable, highestContract)
@@ -232,11 +232,11 @@ function isValidMove(state: GameState, move: Move): boolean {
       return move.suit === trumpSuit;
     }
 
-    // 3.2.2 No trumps yet — must play a trump
+    // No trumps yet — must play a trump
     return move.suit === trumpSuit;
   }
 
-  // 3.3 Can't follow suit or trump → free play
+  // Can't follow suit or trump → free play
   return true;
 }
 

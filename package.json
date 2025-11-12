@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "dev": "docker compose up -d nats postgres && concurrently -n SERVER,LOBBY,GAME,CLIENT -c cyan,green,magenta,blue \"cd server && npm run dev\" \"cd lobby-service && npm run dev\" \"cd game-service && npm run dev\" \"cd client && npm run dev\"",
-    "dev-no-server": "docker compose up -d nats postgres && concurrently -n LOBBY,GAME,CLIENT -c green,magenta,blue \"cd lobby-service && npm run dev\" \"cd game-service && npm run dev\" \"cd client && npm run dev\""
+    "dev": "docker compose up -d nats nats-exporter prometheus grafana postgres && concurrently -n SERVER,LOBBY,GAME,CLIENT -c cyan,green,magenta,blue \"cd server && npm run dev\" \"cd lobby-service && npm run dev\" \"cd game-service && npm run dev\" \"cd client && npm run dev\"",
+    "dev-no-server": "docker compose up -d nats nats-exporter postgres && concurrently -n LOBBY,GAME,CLIENT -c green,magenta,blue \"cd lobby-service && npm run dev\" \"cd game-service && npm run dev\" \"cd client && npm run dev\""
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

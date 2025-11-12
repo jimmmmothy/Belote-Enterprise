@@ -57,7 +57,7 @@ export default class Game {
       this.eventHandler(event);
     }
 
-    addPlayer(player: Player) { // returns TRUE if added successfully; FALSE if game is full
+    addPlayer(player: Player) {
         if (this.state.players.length < 4) {
             this.state.players.push(player);
             return this.state.players.length;
@@ -74,6 +74,9 @@ export default class Game {
     }
 
     start() {
+      if (this.state.players.length !== 4) {
+        throw Error(`[DEBUG ERROR] Game with id ${this.state.id} is trying to start with ${this.state.players.length} players`);
+      }
       console.log("[DEBUG] game.start()");
       this.state.dealer.firstDeal(this.state.players);
       this.emit({ type: "SEND_CARDS", payload: this.state.players });

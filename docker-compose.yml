@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # --- NATS Broker ---
   nats:
@@ -7,7 +5,30 @@ services:
     ports:
       - "4222:4222"   # main NATS connection port
       - "8222:8222"   # monitoring UI
-    command: ["-js"]  # enables JetStream (for persistence if needed)
+    command: ["--http_port", "8222", "-js"]  # enables JetStream (for persistence if needed)
+
+  nats-exporter:
+    image: natsio/prometheus-nats-exporter:latest
+    ports:
+      - "7777:7777"
+    command: ["-varz", "http://nats:8222"]
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+     - "3001:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
 
   # --- Game Microservice ---
   game-service:
@@ -71,3 +92,4 @@ services:
 
 volumes:
   pgdata:
+  grafana-storage:

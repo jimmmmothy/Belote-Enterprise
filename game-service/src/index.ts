@@ -46,18 +46,49 @@ async function start() {
   });
 
   nats.subscribe("game.start", async (msg: string) => {
-    const {id} = JSON.parse(msg);
-    let game = games.find((g) => g.state.id === id);
-    if (!game) throw Error("Game not found");    
+    const { id } = JSON.parse(msg);
 
-    game.start();
+    const MAX_RETRIES = 5;       // configurable (e.g. retry up to 5 times)
+    const RETRY_DELAY_MS = 200;  // wait 200ms between retries
+
+    let retries = 0;
+
+    while (retries < MAX_RETRIES) {
+      const game = games.find((g) => g.state.id === id);
+
+      if (!game) {
+        console.warn(`[WARN] [${id}] Not found (retry ${retries + 1}/${MAX_RETRIES})`);
+    } else if (game.state.players.length === 4) {
+        console.log(`[INFO] [${id}] All players ready — starting game`);
+        try {
+          game.start();
+        } catch (err) {
+          console.error(`[ERROR] [${id}] Error starting game:`, err);
+        }
+        return; // success, stop retrying
+      } else {
+        console.warn(
+          `[WARN] [${id}] Only ${game.state.players.length}/4 players (retry ${retries + 1}/${MAX_RETRIES})`
+        );
+      }
+
+      retries++;
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+    }
+
+    console.error(`[ERROR] [${id}] Failed to start game after ${MAX_RETRIES} retries`);
   });
+
 
   // Subscribe to bids
   nats.subscribe("game.bid", async (msg: string) => {
     const { gameId, playerId, contract } = JSON.parse(msg);
     const game = games.find((g) => g.state.id === gameId);
-    if (!game) throw Error("Game not found");
+
+    if (!game) {
+      console.error("Game not found");
+      return;
+    }
 
     try {
       game.handleBidInput({ playerId, contract });
@@ -70,7 +101,10 @@ async function start() {
   nats.subscribe("game.move", async (msg: string) => {
     const { gameId, move } = JSON.parse(msg);
     const game = games.find((g) => g.state.id === gameId);
-    if (!game) throw Error("Game not found");
+    if (!game) {
+      console.error("Game not found");
+      return;
+    }
 
     try {
       game.handleMoveInput(move);

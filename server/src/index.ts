@@ -4,10 +4,11 @@ import { Server } from "socket.io";
 import { v4 } from "uuid";
 import type { Move } from "./dtos/move";
 import { initNats } from "./nats-client";
+import client from "prom-client";
 
 const app = express();
 app.use(express.json());
-app.use(function (req, res, next) { // CORS stuff
+app.use(function (_req, res, next) { // CORS stuff
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader('Access-Control-Allow-Methods', '*');
   res.setHeader("Access-Control-Allow-Headers", "*");
@@ -15,6 +16,15 @@ app.use(function (req, res, next) { // CORS stuff
 });
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
+
+// const register = new client.Registry(); // Metrics
+// client.collectDefaultMetrics({ register });
+
+// const lobbyCreated = new client.Counter({
+//   name: "lobbies_created_total",
+//   help: "Total number of lobbies created",
+// });
+// register.registerMetric(lobbyCreated);
 
 let nats: {
   sendMessage: (topic: string, data: any) => void;
@@ -52,6 +62,7 @@ app.post("/lobbies", async (req, res) => {
     // Tell the game service a player has joined
     nats.sendMessage("game.register", { id: lobbyId, playerId }); // Can also extend to add player name
 
+    // lobbyCreated.inc(); // Increment metric
     res.status(201).json({ lobbyId, playerId });
   }
 });
@@ -85,6 +96,11 @@ app.delete("/lobbies/:id", async (req, res) => {
     res.status(200).json({});
   }
 });
+
+// app.get("/metrics", async (_req, res) => {
+//   res.set("Content-Type", register.contentType);
+//   res.end(await register.metrics());
+// });
 
 async function start() {
   io.on("connection", (socket) => {

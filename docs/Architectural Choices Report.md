@@ -1,5 +1,45 @@
 # Architecture Choices Report
 
+## Architecture Update (30.10.2025)
+
+The system has now evolved into a fully distributed microservice architecture consisting of the Server, Lobby Service, and Game Service, all communicating asynchronously through NATS. Each service is independently deployable, containerized, and connected to PostgreSQL for persistent storage. Prometheus and Grafana provide observability for metrics and performance monitoring.
+
+### Overview
+
+- Server – Acts as the main gateway and orchestrator. It manages connections, session data, and message routing.
+- Lobby Service – Handles all matchmaking and lobby management logic. It creates, fills, and transitions lobbies to active games by publishing game.start events.
+- Game Service – Runs all core game logic. It receives moves and state updates through NATS topics and responds with processed results to the server.
+- NATS – The backbone of the communication layer. It enables event-driven interactions between services while maintaining loose coupling.
+
+### Lobby Service
+- `src/`
+  - `dtos/`
+    - `player.ts`          # Player-related data transfer objects
+  - `lobby/`
+    - `lobby.ts`           # Core lobby logic (create, join, ready-up, start)
+  - `index.ts`               # Service entry point (NATS subscriptions)
+  - `nats-client.ts`         # Helper for publishing/subscribing to topics
+- `prisma/`                    # Database schema & migrations
+- `prisma.config.js`           # Prisma configuration
+
+The Lobby Service maintains in-memory state for active lobbies and coordinates with the database for persistence. Once a lobby is full, it emits a game.start event via NATS, triggering the Game Service to initialize a new match.
+
+### Communication Flow
+
+```Client → Server → NATS → Lobby Service → NATS → Game Service → NATS → Server → Client```
+
+This asynchronous chain allows services to operate independently, improving scalability and resilience. Failures in one service (e.g., a failed game start) no longer propagate to others.
+
+### Data Layer and Monitoring
+
+All persistent data (only lobby states for now) is stored in a PostgreSQL instance. Currently, only the lobby service has access to this database through its own isolated data access layer, ensuring separation of concerns and simpler schema evolution. The schema is normalized around players, lobbies, and games, with references linking their respective IDs. Transaction boundaries have been clearly defined to avoid deadlocks during high-concurrency scenarios observed in load testing.
+
+For system observability, I integrated Prometheus and Grafana. Each service exposes metrics that are scraped and visualized in Grafana dashboards, providing insight into latency, throughput, and resource utilization. This setup enables early detection of performance bottlenecks and verification of non-functional requirements such as scalability and reliability. These tools also made it possible to quantify performance improvements between architecture iterations.
+
+### Containerization and Orchestration plan
+
+All components — including the main services, database, message broker, and monitoring stack — are containerized through Docker. They can be orchestrated together using Docker Compose or deployed individually in future Kubernetes environments. This structure enables isolated development, parallel service updates, and simple replication of the environment on other machines. Continuous integration pipelines automatically build and push updated images to GitHub Container Registry (GHCR), ensuring that all containers are versioned and ready for deployment.
+
 ## Architecture Update (23.10.2025)
 I have migrated to a basic-level microservice architecture.
 
