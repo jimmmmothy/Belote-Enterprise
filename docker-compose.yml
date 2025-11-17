@@ -47,7 +47,7 @@ services:
     container_name: lobby-service
     depends_on:
       - nats
-      - postgres
+      - lobbies-postgres
     environment:
       - NATS_URL=nats://nats:4222
       - LOBBY_DATABASE_URL=postgresql://postgres:admin@postgres:5432/belote-lobbies
@@ -78,7 +78,7 @@ services:
     # volumes:
     #   - ./client:/app
   
-  postgres:
+  lobbies-postgres:
     image: postgres:latest
     container_name: lobbies-db
     environment:
@@ -88,8 +88,21 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - lobbies_belote_data:/var/lib/postgresql/data
+
+  users-postgres:
+    image: postgres:latest
+    container_name: users-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: belote-users
+    ports:
+      - "5431:5432"
+    volumes:
+      - auth_belote_data:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+  lobbies_belote_data:
+  auth_belote_data:
   grafana-storage:

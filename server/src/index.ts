@@ -42,6 +42,27 @@ initNats()
   })
   .catch(err => console.log("[ERROR] NATS connection error:", err));
 
+app.post("/register", async (req, res) => {
+  try {
+    const data = req.body;
+    const result = await nats.request("auth.register", data, 3000 );
+    if (result.error) return res.status(400).json({ error: result.error });
+    res.status(201).json({ token: result.token });
+  } catch (err) {
+    res.status(500).json({ error: "Auth service unavailable" });
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const data = req.body;
+    const result = await nats.request("auth.login", data, 3000);
+    if (result.error) return res.status(401).json({ error: result.error });
+    res.status(200).json({ token: result.token });
+  } catch (err) {
+    res.status(500).json({ error: "Auth service unavailable" });
+  }
+});
 
 app.get("/lobbies", async (_req, res) => {
   try {
