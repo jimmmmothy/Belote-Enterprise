@@ -2,9 +2,8 @@ import express from "express";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { v4 } from "uuid";
-import type { Move } from "./dtos/move";
-import { initNats } from "./nats-client";
-import client from "prom-client";
+import type { Move } from "./dtos/move.js";
+import { initNats } from "./nats-client.js";
 
 const app = express();
 app.use(express.json());
@@ -42,7 +41,7 @@ initNats()
   })
   .catch(err => console.log("[ERROR] NATS connection error:", err));
 
-app.post("/register", async (req, res) => {
+app.post("/auth/register", async (req, res) => {
   try {
     const data = req.body;
     const result = await nats.request("auth.register", data, 3000 );
@@ -53,7 +52,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/auth/login", async (req, res) => {
   try {
     const data = req.body;
     const result = await nats.request("auth.login", data, 3000);

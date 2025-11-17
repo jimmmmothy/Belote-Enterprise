@@ -1,0 +1,49 @@
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.auth-box {
+    display: flex;
+    flex-direction: column;
+    background: gray;
+    min-width: 50vh;
+    padding: 20px 50px 20px 50px;
+    border-style: solid;
+    border-radius: 5px;
+    border-width: 2px;
+    border-color: black;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.input {
+    padding: 10px;
+    border-style: solid;
+    border-width: 2px;
+    min-width: 100%;
+}
+
+.toggle-text {
+    font-size: smaller;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 2px;
+    margin-top: 20px;
+}
+
+.toggle-mode {
+    background-color: transparent;
+    color: aqua;
+}
+.toggle-mode:hover {
+    text-decoration: underline aqua;
+    cursor: pointer;
+}

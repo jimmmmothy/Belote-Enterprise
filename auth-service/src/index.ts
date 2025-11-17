@@ -41,7 +41,7 @@ async function start() {
 
             nats.sendMessage(reply, { token });
         } catch (err) {
-            nats.sendMessage(reply, { error: "Internal error" });
+            nats.sendMessage(reply, { error: `Internal error: ${err}` });
         }
     });
 

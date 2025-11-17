@@ -1,5 +1,5 @@
 services:
-  # --- NATS Broker ---
+  # NATS BROKER
   nats:
     image: nats:latest
     ports:
@@ -7,6 +7,7 @@ services:
       - "8222:8222"   # monitoring UI
     command: ["--http_port", "8222", "-js"]  # enables JetStream (for persistence if needed)
 
+  # MONITORING PIPELINE
   nats-exporter:
     image: natsio/prometheus-nats-exporter:latest
     ports:
@@ -30,7 +31,7 @@ services:
     volumes:
       - grafana-storage:/var/lib/grafana
 
-  # --- Game Microservice ---
+  # MICROSERVICES
   game-service:
     build: ./game-service
     container_name: game-service
@@ -41,7 +42,6 @@ services:
     # volumes:
     #   - ./game-service:/app
 
-  # --- Lobby Mircroservice ---
   lobby-service:
     build: ./lobby-service
     container_name: lobby-service
@@ -50,11 +50,20 @@ services:
       - lobbies-postgres
     environment:
       - NATS_URL=nats://nats:4222
-      - LOBBY_DATABASE_URL=postgresql://postgres:admin@postgres:5432/belote-lobbies
+      - LOBBY_DATABASE_URL=postgresql://postgres:admin@lobbies-postgres:5432/belote-lobbies
     # volumes:
     #   - ./lobby-service:/app
 
-  # --- Main Server ---
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    depends_on:
+      - nats
+      - users-postgres
+    environment:
+      - NATS_URL=nats://nats:4222
+      - USER_DATABASE_URL=postgresql://postgres:admin@users-postgres:5431/belote-users
+
   server:
     build: ./server
     container_name: server
@@ -63,11 +72,10 @@ services:
     environment:
       - NATS_URL=nats://nats:4222
     ports:
-      - "3000:3000"   # backend port
+      - "3000:3000"   
     # volumes:
     #   - ./server:/app
 
-  # --- React Client ---
   client:
     build: ./client
     container_name: client
@@ -78,6 +86,7 @@ services:
     # volumes:
     #   - ./client:/app
   
+  # DATABASES
   lobbies-postgres:
     image: postgres:latest
     container_name: lobbies-db

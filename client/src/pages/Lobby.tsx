@@ -4,10 +4,10 @@ import { SERVER_URL } from "../config";
 import axios from "axios";
 import "./Lobby.css";
 
-export default function Lobby() {
+export default function LobbyPage() {
   const [lobbies, setLobbies] = useState<{ id: string; name: string; status: string }[]>([]);
   const [lobbyName, setLobbyName] = useState("");
-  const [playerName, setPlayerName] = useState("");
+  const [playerName] = useState("temp");
   const navigate = useNavigate();
 
   async function fetchLobbies() {
@@ -47,13 +47,12 @@ export default function Lobby() {
   return (
     <div className="page">
       <div className="create-lobby">
-        <input type="text" placeholder="Your name" onChange={(e) => setPlayerName(e.target.value)} />
         <input type="text" placeholder="Lobby name" onChange={(e) => setLobbyName(e.target.value)} />
         <button onClick={createLobby}>Create Lobby</button>
       </div>
 
       <div className="lobby-list">
-        {lobbies ? lobbies.map(l =>
+        {lobbies.length > 0 ? lobbies.map(l =>
           <div className="lobby-item" onClick={() => joinLobby(l.id)}>
             <span>{l.name}</span>
             <span>{l.status}</span>

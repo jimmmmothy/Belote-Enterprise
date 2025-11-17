@@ -1,9 +1,9 @@
-import Dealer from "./dealer";
-import type { Move } from "../dtos/move";
-import Player from "./player";
-import type { GameState } from "./types";
-import { startBiddingPhase, handleBid } from "./phases/bidding";
-import { handleMove } from "./phases/playing";
+import Dealer from "./dealer.js";
+import type { Move } from "../dtos/move.js";
+import Player from "./player.js";
+import type { GameState } from "./types.js";
+import { startBiddingPhase, handleBid } from "./phases/bidding.js";
+import { handleMove } from "./phases/playing.js";
 
 type GameEventName =
   | "SEND_CARDS"

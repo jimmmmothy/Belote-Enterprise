@@ -1,5 +1,5 @@
 import { v4 } from "uuid";
-import { initNats } from "./nats-client";
+import { initNats } from "./nats-client.js";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();

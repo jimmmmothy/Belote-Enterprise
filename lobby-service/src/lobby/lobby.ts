@@ -1,4 +1,4 @@
-import { Player } from "../dtos/player";
+import { Player } from "../dtos/player.js";
 
 export class Lobby {
   id: string;
