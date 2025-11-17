@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - "lobby-service/**"
-      - ".github/workflows/lobby.yml"
+      - ".github/workflows/lobby.yaml"
 
 jobs:
   build-and-deploy:

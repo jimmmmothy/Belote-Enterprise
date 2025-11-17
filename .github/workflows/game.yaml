@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - "game-service/**"
-      - ".github/workflows/game.yml"
+      - ".github/workflows/game.yaml"
 
 jobs:
   build-and-deploy:
