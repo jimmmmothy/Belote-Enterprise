@@ -20,7 +20,7 @@ export async function initNats() {
     })();
   }
 
-  async function request(topic: string, data: any, timeout = 2000) {
+  async function request(topic: string, data: any, timeout = 5000) {
     const msg = await nc.request(topic, sc.encode(JSON.stringify(data)), { timeout });
     return JSON.parse(sc.decode(msg.data));
   }

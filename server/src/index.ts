@@ -77,6 +77,7 @@ app.post("/lobbies", async (req, res) => {
   const lobbyId = v4();
   const playerId = v4();
 
+  console.log("[DEBUG] Creating lobby with ID:", lobbyId);
   const result = await nats.request("lobby.create", { id: lobbyId, name: lobbyName, playerId, playerName });
   if (result.success) { // Lobby created
     // Tell the game service a player has joined

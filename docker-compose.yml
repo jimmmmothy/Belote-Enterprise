@@ -62,7 +62,7 @@ services:
       - users-postgres
     environment:
       - NATS_URL=nats://nats:4222
-      - USER_DATABASE_URL=postgresql://postgres:admin@users-postgres:5431/belote-users
+      - USER_DATABASE_URL=postgresql://postgres:admin@users-postgres:5432/belote-users
 
   server:
     build: ./server

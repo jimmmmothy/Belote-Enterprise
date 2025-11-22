@@ -14,15 +14,22 @@ async function start() {
 
   nats.subscribe("lobby.create", async (msg, reply) => {
     const { id, name, playerId, playerName } = JSON.parse(msg);
+    console.log("1");
 
     try {
+      console.log("2");
       await prisma.$transaction(async (prisma: any) => {
         await prisma.lobby.create({ data: { id: id, name: name } });
         await prisma.lobbyPlayer.create({ data: { id: v4(), lobbyId: id, playerId: playerId, name: playerName } });
 
-        if (reply) nats.sendMessage(reply, { success: true })
+        console.log("3");
+        if (reply) nats.sendMessage(reply, { success: true });
+        else console.error("[ERROR] No reply subject provided for lobby.create");
       });
     } catch (err) {
+      if (reply) nats.sendMessage(reply, { success: false, error: "Failed to create lobby or player" });
+      else console.error("[ERROR] No reply subject provided for lobby.create");
+      console.log("4");
       console.error("[ERROR] Failed to create lobby or player", err);
     }
   });
@@ -38,6 +45,7 @@ async function start() {
     } else if (playersInLobby.length < 4) {
       await prisma.lobbyPlayer.create({ data: { id: v4(), lobbyId, playerId, name: playerName } });
       await prisma.lobby.update({ where: { id: lobbyId }, data: { status: "full" } });
+      
       if (reply) nats.sendMessage(reply, { success: true, full: true });
     }
     else {
