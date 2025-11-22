@@ -1,6 +1,6 @@
 import { initNats } from "./nats-client.js";
 import Game from "./game/game.js";
-import Player from "./game/player.js";
+import Player from "./game/player.js"; 
 
 // Keep all game instances in memory
 const games: Game[] = [];

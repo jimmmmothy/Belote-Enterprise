@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { v4 } from "uuid";
 import type { Move } from "./dtos/move.js";
-import { initNats } from "./nats-client.js";
+import { initNats } from "./nats-client.js"; 
 
 const app = express();
 app.use(express.json());
