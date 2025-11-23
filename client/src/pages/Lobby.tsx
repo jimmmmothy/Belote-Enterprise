@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { SERVER_URL } from "../config";
+import { loadConfig } from "../config";
 import axios from "axios";
 import "./Lobby.css";
 
@@ -11,6 +11,7 @@ export default function LobbyPage() {
   const navigate = useNavigate();
 
   async function fetchLobbies() {
+    const SERVER_URL = await loadConfig().then(config => config?.serverUrl || "");
     const res = await axios.get(`${SERVER_URL}/lobbies`);
     const data = res.data;
     console.log("Fetched lobbies:", data);
@@ -18,6 +19,7 @@ export default function LobbyPage() {
   }
 
   async function createLobby() {
+    const SERVER_URL = await loadConfig().then(config => config?.serverUrl || "");
     const res = await axios.post(`${SERVER_URL}/lobbies`, { lobbyName, playerName });
     const data = res.data;
 
@@ -27,6 +29,7 @@ export default function LobbyPage() {
   }
 
   async function joinLobby(lobbyId: string) {
+    const SERVER_URL = await loadConfig().then(config => config?.serverUrl || "");
     const res = await axios.post(`${SERVER_URL}/lobbies/${lobbyId}/join`, { playerName });
     const data = res.data;
     

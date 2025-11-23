@@ -2,7 +2,7 @@
 import axios from "axios";
 import { useState, useEffect, type BaseSyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { SERVER_URL } from "../config";
+import { loadConfig } from "../config";
 import "./Auth.css";
 
 export default function AuthPage() {
@@ -61,6 +61,8 @@ export default function AuthPage() {
 
     try {
       setLoading(true);
+      const SERVER_URL = await loadConfig().then(config => config?.serverUrl || "");
+
       const response = await axios.post(`${SERVER_URL}${endpoint}`, payload);
       const token = response.data.token;
       if (!token) {

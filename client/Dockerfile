@@ -10,10 +10,6 @@ RUN npm ci
 # Copy source
 COPY . .
 
-# Inject build-time env variable
-ARG VITE_SERVER_URL
-ENV VITE_SERVER_URL=$VITE_SERVER_URL
-
 # Build production bundle
 RUN npm run build
 

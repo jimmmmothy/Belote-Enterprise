@@ -1,9 +1,10 @@
 import { io } from "socket.io-client";
 import { useEffect, useState } from "react";
-import { SERVER_URL } from "../config";
+import { loadConfig } from "../config";
 import type { AvailableContracts, Move, ReceiveHand, TableProps } from "../types";
 import { Table } from "../components/Table";
 
+const SERVER_URL = await loadConfig().then(config => config?.serverUrl || "");
 const socket = io(SERVER_URL);
 
 export default function GamePage() {
