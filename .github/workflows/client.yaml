@@ -26,7 +26,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/client:latest ./client
+          docker build --build-arg VITE_SERVER_URL=http://server:3000 -t ghcr.io/jimmmmothy/belote-client:latest ./client
           docker push ghcr.io/${{ github.repository_owner }}/client:latest
 
       # - name: Set up kubectl
