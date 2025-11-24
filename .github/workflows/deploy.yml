@@ -17,7 +17,7 @@ jobs:
         id: changes
         run: |
           git fetch origin main
-          FILES=$(git diff --name-only origin/main HEAD)
+          FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
 
           SERVICE=""
           if echo "$FILES" | grep -q "^auth-service/"; then
