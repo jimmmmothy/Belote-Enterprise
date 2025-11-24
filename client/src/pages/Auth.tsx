@@ -85,7 +85,7 @@ export default function AuthPage() {
   return (
     <div className="container">
       <div className="auth-box">
-        <p>easter egg!!</p>
+        <p>easter egg!</p>
         <h1>{mode === "signin" ? "Sign In" : "Sign Up"}</h1>
 
         {error && <div style={{ color: "red", marginBottom: 10 }}>{error}</div>}
