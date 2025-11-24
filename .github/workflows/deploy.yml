@@ -48,8 +48,8 @@ jobs:
         if: steps.changes.outputs.service != 'none'
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ variables.VM_HOST }}
-          username: ${{ variables.VM_USER }}
+          host: ${{ $VM_HOST }}
+          username: ${{ $VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
             cd belote
