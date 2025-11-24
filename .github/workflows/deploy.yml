@@ -1,0 +1,56 @@
+name: Deploy Service
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+
+      - name: Determine which service changed
+        id: changes
+        run: |
+          git fetch origin main
+          FILES=$(git diff --name-only origin/main HEAD)
+
+          SERVICE=""
+          if echo "$FILES" | grep -q "^auth-service/"; then
+            SERVICE="auth-service"
+          elif echo "$FILES" | grep -q "^lobby-service/"; then
+            SERVICE="lobby-service"
+          elif echo "$FILES" | grep -q "^game-service/"; then
+            SERVICE="game-service"
+          elif echo "$FILES" | grep -q "^client/"; then
+            SERVICE="client"
+          elif echo "$FILES" | grep -q "^server/"; then
+            SERVICE="server"
+          fi
+
+          if [ -z "$SERVICE" ]; then
+            echo "No service changed"
+            echo "service=none" >> $GITHUB_OUTPUT
+          else
+            echo "Service changed: $SERVICE"
+            echo "service=$SERVICE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop if nothing changed
+        if: steps.changes.outputs.service == 'none'
+        run: echo "No service to deploy"
+
+      - name: Deploy to VM
+        if: steps.changes.outputs.service != 'none'
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ variables.VM_HOST }}
+          username: ${{ variables.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd belote
+            ./deploy.sh ${{ steps.changes.outputs.service }}
