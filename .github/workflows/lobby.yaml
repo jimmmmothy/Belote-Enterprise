@@ -13,7 +13,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: game-service
+        working-directory: lobby-service
 
     steps:
       - name: Checkout repository

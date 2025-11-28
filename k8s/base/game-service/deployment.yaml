@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: game-service
+  labels:
+    app: belote
+    component: game-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: belote
+      component: game-service
+  template:
+    metadata:
+      labels:
+        app: belote
+        component: game-service
+    spec:
+      containers:
+        - name: game-service
+          image: ghcr.io/jimmmmothy/game-service:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: belote-config
+            - secretRef:
+                name: belote-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            exec:
+              command: ["/bin/sh", "-c", "pgrep node"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["/bin/sh", "-c", "pgrep node"]
+            initialDelaySeconds: 20
+            periodSeconds: 20

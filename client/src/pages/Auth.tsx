@@ -3,6 +3,7 @@ import axios from "axios";
 import { useState, useEffect, type BaseSyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { loadConfig } from "../config";
+import { persistAuthFromToken } from "../utils/authSaga";
 import "./Auth.css";
 
 export default function AuthPage() {
@@ -27,6 +28,7 @@ export default function AuthPage() {
       const exp = payload.exp * 1000;
       if (Date.now() >= exp) {
         localStorage.removeItem("token");
+        localStorage.removeItem("username");
       }
     } catch {}
   }, []);
@@ -72,6 +74,7 @@ export default function AuthPage() {
       }
 
       localStorage.setItem("token", token);
+      persistAuthFromToken(token);
       setSuccess("Success! Redirecting...");
       setTimeout(() => navigate("/lobby"), 800);
     } catch (err: any) {

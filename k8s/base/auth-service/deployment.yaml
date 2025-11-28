@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  labels:
+    app: belote
+    component: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: belote
+      component: auth-service
+  template:
+    metadata:
+      labels:
+        app: belote
+        component: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: ghcr.io/jimmmmothy/auth-service:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: belote-config
+            - secretRef:
+                name: belote-secrets
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: belote-secrets
+                  key: USER_DATABASE_URL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            exec:
+              command: ["/bin/sh", "-c", "pgrep node"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["/bin/sh", "-c", "pgrep node"]
+            initialDelaySeconds: 20
+            periodSeconds: 20

@@ -37,7 +37,7 @@ async function start() {
                     password: hash
                 }
             });
-            const token = signToken(user.id, user.email);
+            const token = signToken(user.id, user.email, user.username);
 
             nats.sendMessage(reply, { token });
         } catch (err) {
@@ -72,7 +72,7 @@ async function start() {
                 return;
             }
 
-            const token = signToken(user.id, user.email);
+            const token = signToken(user.id, user.email, user.username);
             nats.sendMessage(reply, { token });
         } catch (err) {
             nats.sendMessage(reply, { error: "Internal error" });

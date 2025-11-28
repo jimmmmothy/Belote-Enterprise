@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: belote-config
+  labels:
+    app: belote
+    component: config
+data:
+  NODE_ENV: "production"
+  NATS_URL: "nats://nats:4222"
+  USERS_POSTGRES_HOST: "users-postgres"
+  LOBBIES_POSTGRES_HOST: "lobbies-postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "postgres"
+  USERS_POSTGRES_DB: "belote-users"
+  LOBBIES_POSTGRES_DB: "belote-lobbies"
+  JWT_ISSUER: "belote-app"
+  CLIENT_API_BASE: "http://server:3000"

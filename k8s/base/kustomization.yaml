@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - config/application-configmap.yaml
+  - config/application-secrets.yaml
+  - auth-service/deployment.yaml
+  - auth-service/service.yaml
+  - lobby-service/deployment.yaml
+  - lobby-service/service.yaml
+  - lobby-service/hpa.yaml
+  - game-service/deployment.yaml
+  - game-service/service.yaml
+  - server/deployment.yaml
+  - server/service.yaml
+  - client/deployment.yaml
+  - client/service.yaml
+  - nats/deployment.yaml
+  - nats/service.yaml
+  - users-postgres/statefulset.yaml
+  - users-postgres/service.yaml
+  - lobbies-postgres/statefulset.yaml
+  - lobbies-postgres/service.yaml
