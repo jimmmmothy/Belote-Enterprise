@@ -80,7 +80,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Apply client overlay
-        run: minikube kubectl -- apply -k k8s/overlays/minikube-client
+        run: minikube kubectl -- apply -k k8s/overlays/minikube
 
       - name: Update image
         run: minikube kubectl -- set image deployment/client client=$IMAGE_NAME:${{ github.sha }} -n default

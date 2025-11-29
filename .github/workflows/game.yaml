@@ -81,7 +81,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Apply game overlay
-        run: minikube kubectl -- apply -k k8s/overlays/minikube-game
+        run: minikube kubectl -- apply -k k8s/overlays/minikube
 
       - name: Update image
         run: minikube kubectl -- set image deployment/game-service game-service=$IMAGE_NAME:${{ github.sha }} -n default

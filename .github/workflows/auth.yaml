@@ -81,7 +81,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Apply auth overlay
-        run: minikube kubectl -- apply -k k8s/overlays/minikube-auth
+        run: minikube kubectl -- apply -k k8s/overlays/minikube
 
       - name: Update image
         run: minikube kubectl -- set image deployment/auth-service auth-service=$IMAGE_NAME:${{ github.sha }} -n default
