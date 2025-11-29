@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/example/belote.git
+    repoURL: https://github.com/jimmmmothy/Belote-Enterprise.git
     targetRevision: main
     path: k8s/overlays/minikube
   destination:

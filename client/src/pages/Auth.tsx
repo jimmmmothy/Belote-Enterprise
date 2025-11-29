@@ -30,7 +30,11 @@ export default function AuthPage() {
         localStorage.removeItem("token");
         localStorage.removeItem("username");
       }
-    } catch {}
+    } catch {
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      console.error("Error parsing token.");
+    }
   }, []);
 
   const toggleMode = () => {
@@ -66,7 +70,7 @@ export default function AuthPage() {
       const SERVER_URL = await loadConfig().then(config => config?.serverUrl || "");
 
       const response = await axios.post(`${SERVER_URL}${endpoint}`, payload);
-      const token = response.data.token;
+      const token: string = response.data.token;
       if (!token) {
         setError("Server did not return a token.");
         setLoading(false);

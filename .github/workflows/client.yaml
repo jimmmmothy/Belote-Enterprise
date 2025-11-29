@@ -1,21 +1,59 @@
-name: Deploy Client
+name: Client CI/CD
 
 on:
   push:
+    branches: [main]
     paths:
       - "client/**"
+      - "k8s/base/client/**"
+      - "k8s/overlays/minikube-client/**"
+      - ".github/workflows/client.yaml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "client/**"
+      - "k8s/base/client/**"
+      - "k8s/overlays/minikube-client/**"
       - ".github/workflows/client.yaml"
 
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/client
+  VITE_SERVER_URL: http://server:3000
+
 jobs:
-  build-and-deploy:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+  build-and-push:
+    needs: build-and-test
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -26,14 +64,26 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build --build-arg VITE_SERVER_URL=http://server:3000 -t ghcr.io/${{ github.repository_owner }}/client:latest ./client
-          docker push ghcr.io/${{ github.repository_owner }}/client:latest
+          docker buildx build --push \
+            --build-arg VITE_SERVER_URL=$VITE_SERVER_URL \
+            -f client/Dockerfile \
+            -t $IMAGE_NAME:latest \
+            -t $IMAGE_NAME:${{ github.sha }} \
+            client
 
-      # - name: Set up kubectl
-      #   run: |
-      #     echo "${{ secrets.KUBECONFIG }}" > kubeconfig
-      #     export KUBECONFIG=./kubeconfig
+  deploy-minikube:
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, minikube]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # - name: Deploy to Kubernetes
-      #   run: |
-      #     kubectl apply -f client/k8s/
+      - name: Apply client overlay
+        run: minikube kubectl apply -k k8s/overlays/minikube-client
+
+      - name: Update image
+        run: minikube kubectl set image deployment/client client=$IMAGE_NAME:${{ github.sha }} -n default
+
+      - name: Verify rollout
+        run: minikube kubectl rollout status deployment/client --timeout=120s

@@ -1,7 +1,7 @@
-import type { Card, GameState } from "../types";
-import type { Move } from "../../dtos/move";
-import Player from "../player";
-import { setTimeout } from "node:timers/promises";
+import type { Card, GameState } from '../types';
+import type { Move } from '../../dtos/move';
+import Player from '../player';
+import { setTimeout } from 'node:timers/promises';
 
 const TrumpOrder: Record<string, number> = {
   '7': 0,
@@ -12,7 +12,7 @@ const TrumpOrder: Record<string, number> = {
   'A': 5,
   '9': 6,
   'J': 7
-}
+};
 
 const TrumpScore: Record<string, number> = {
   '7': 0,
@@ -23,7 +23,7 @@ const TrumpScore: Record<string, number> = {
   'A': 11,
   '9': 14,
   'J': 20
-}
+};
 
 const RegularOrder: Record<string, number> = {
   '7': 0,
@@ -34,7 +34,7 @@ const RegularOrder: Record<string, number> = {
   'K': 5,
   '10': 6,
   'A': 7
-}
+};
 
 const RegularScore: Record<string, number> = {
   '7': 0,
@@ -45,66 +45,66 @@ const RegularScore: Record<string, number> = {
   'K': 4,
   '10': 10,
   'A': 11
-}
+};
 
 export function startPlayingPhase(state: GameState, emit: Function): GameState {
   emit({
-    type: "PLAYING_STARTED",
+    type: 'PLAYING_STARTED',
     payload: {}
   });
   state.dealer.secondDeal(state.players);
   emit({
-    type: "SEND_CARDS",
+    type: 'SEND_CARDS',
     payload: state.players,
   });
   const firstPlayer = state.players[state.currentPlayerIndex];
   emit({
-    type: "PLAYING_TURN",
+    type: 'PLAYING_TURN',
     recepient: firstPlayer.socketId,
   });
-  return { ...state, phase: "PLAYING", currentTrick: [] };
+  return { ...state, phase: 'PLAYING', currentTrick: [] };
 }
 
 export function handleMove(state: GameState, move: Move, emit: Function): GameState {
   const player = state.players[state.currentPlayerIndex];
-  if (player.playerId !== move.playerId) throw Error("Not your turn");
+  if (player.playerId !== move.playerId) throw Error('Not your turn');
 
   if (state.currentTrick.find(t => t.playerId === move.playerId))
-    throw Error("You already played");
+    throw Error('You already played');
 
   // Validate move
   if (!isValidMove(state, move)) {
     emit({
-      type: "PLAYING_TURN",
+      type: 'PLAYING_TURN',
       recepient: player.socketId,
       payload: {}
     });
-    throw Error("Invalid move"); // maybe also emit event to let player know its not possible
+    throw Error('Invalid move'); // maybe also emit event to let player know its not possible
   }
 
   const newTrick = [...state.currentTrick, move];
   // player.removeCard({ suit: move.suit, rank: move.rank }); this doesnt affect state.player
   state.players[state.currentPlayerIndex].removeCard({ suit: move.suit, rank: move.rank });
   emit({
-    type: "MOVE_PLAYED",
+    type: 'MOVE_PLAYED',
     recepient: state.id,
     payload: { playerId: move.playerId, suit: move.suit, rank: move.rank }
   });
 
   if (newTrick.length === 4) {
-    let winner = state.players.find(p => p.playerId === getTrickWinningCard(state.currentTrick, state.highestContract, state).playerId);
+    const winner = state.players.find(p => p.playerId === getTrickWinningCard(state.currentTrick, state.highestContract, state).playerId);
     if (!winner)
-      throw Error("Couldn't identify winner of this trick");
+      throw Error('Couldn\'t identify winner of this trick');
     
     switch (winner.team) {
-      case "team 0":
-        state.score.team0 += calculateTrickScore(state.currentTrick, state.highestContract);
-        break;
-      case "team 1":
-        state.score.team1 += calculateTrickScore(state.currentTrick, state.highestContract);
-        break;
-      default:
-        throw Error("Couldn't identify team of this trick's winner");
+    case 'team 0':
+      state.score.team0 += calculateTrickScore(state.currentTrick, state.highestContract);
+      break;
+    case 'team 1':
+      state.score.team1 += calculateTrickScore(state.currentTrick, state.highestContract);
+      break;
+    default:
+      throw Error('Couldn\'t identify team of this trick\'s winner');
     }
 
     let winnerIndex;
@@ -115,17 +115,17 @@ export function handleMove(state: GameState, move: Move, emit: Function): GameSt
 
     setTimeout(1000); // Sleep 1 sec to allow users to see whats happening
     emit({
-      type: "PLAYING_TURN",
+      type: 'PLAYING_TURN',
       recepient: winner.socketId,
       payload: {}
     });
     emit({
-      type: "TRICK_FINISHED",
+      type: 'TRICK_FINISHED',
       recepient: state.id,
       payload: {}
     });
 
-    console.log("[INFO] Current score:", state.score);
+    console.log('[INFO] Current score:', state.score);
 
     return { ...state, currentPlayerIndex: winnerIndex!, currentTrick: [] };
   }
@@ -133,7 +133,7 @@ export function handleMove(state: GameState, move: Move, emit: Function): GameSt
   const nextPlayerIndex = (state.currentPlayerIndex + 1) % 4;
   const nextPlayer = state.players[nextPlayerIndex];
   emit({
-    type: "PLAYING_TURN",
+    type: 'PLAYING_TURN',
     recepient: nextPlayer.socketId,
     payload: {}
   });
@@ -149,7 +149,7 @@ function calculateTrickScore(trick: Move[], contract: string): number {
   let score = 0;
 
   trick.forEach(m => {
-    if (m.suit.toLowerCase() === contract.toLowerCase() || contract.toLowerCase() === "all trumps") {
+    if (m.suit.toLowerCase() === contract.toLowerCase() || contract.toLowerCase() === 'all trumps') {
       score += TrumpScore[m.rank];
     }
     else {

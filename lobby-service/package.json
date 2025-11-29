@@ -3,7 +3,8 @@
     "dev": "prisma generate && prisma migrate deploy && tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/src/index.js",
-    "test": "vitest"
+    "test": "vitest",
+    "lint": "eslint . --ext .ts"
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",
@@ -16,6 +17,8 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "eslint": "^9.39.1",
     "vitest": "^4.0.10"
   }
 }

@@ -1,11 +1,11 @@
-import { connect, StringCodec } from "nats";
+import { connect, StringCodec } from 'nats';
 
 const sc = StringCodec();
 
 export async function initNats() {
   const nc = await connect({ servers: process.env.NATS_URL });
-  console.log("Server connected to NATS");
-  console.log("Server port:", nc.info?.port);
+  console.log('Server connected to NATS');
+  console.log('Server port:', nc.info?.port);
 
   function sendMessage(topic: string, data: any) {
     nc.publish(topic, sc.encode(JSON.stringify(data)));

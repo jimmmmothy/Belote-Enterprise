@@ -1,6 +1,6 @@
-import { initNats } from "./nats-client.js";
-import Game from "./game/game.js";
-import Player from "./game/player.js"; 
+import { initNats } from './nats-client.js';
+import Game from './game/game.js';
+import Player from './game/player.js'; 
 
 // Keep all game instances in memory
 const games: Game[] = [];
@@ -10,11 +10,11 @@ async function start() {
 
   // Utility to publish game updates
   function publishEvent(type: string, payload: any, recepient: any) {
-    nats.sendMessage("game.event", { type, payload, recepient });
+    nats.sendMessage('game.event', { type, payload, recepient });
   }
 
   // Subscribe to player registration
-  nats.subscribe("game.register", async (msg: string) => {
+  nats.subscribe('game.register', async (msg: string) => {
     const { id, playerId, socketId } = JSON.parse(msg);
 
     let game = games.find((g) => g.state.id === id);
@@ -34,17 +34,17 @@ async function start() {
     if (player) {
       game.reassignClientId(playerId, socketId);
       console.log(`[INFO] Reconnected player: ${playerId}`);
-      game.emit({ type: "SEND_CARDS", payload: game.state.players });
+      game.emit({ type: 'SEND_CARDS', payload: game.state.players });
       return;
     }
 
     // Otherwise, new player joins
     player = new Player(playerId, `team ${game.state.players.length % 2}`, socketId);
     game.addPlayer(player);
-    console.log("[INFO] New player joined:", player.playerId);
+    console.log('[INFO] New player joined:', player.playerId);
   });
 
-  nats.subscribe("game.start", async (msg: string) => {
+  nats.subscribe('game.start', async (msg: string) => {
     const { id } = JSON.parse(msg);
 
     const MAX_RETRIES = 5;       // configurable (e.g. retry up to 5 times)
@@ -57,7 +57,7 @@ async function start() {
 
       if (!game) {
         console.warn(`[WARN] [${id}] Not found (retry ${retries + 1}/${MAX_RETRIES})`);
-    } else if (game.state.players.length === 4) {
+      } else if (game.state.players.length === 4) {
         console.log(`[INFO] [${id}] All players ready — starting game`);
         try {
           game.start();
@@ -80,44 +80,44 @@ async function start() {
 
 
   // Subscribe to bids
-  nats.subscribe("game.bid", async (msg: string) => {
+  nats.subscribe('game.bid', async (msg: string) => {
     const { gameId, playerId, contract } = JSON.parse(msg);
     const game = games.find((g) => g.state.id === gameId);
 
     if (!game) {
-      console.error("Game not found");
+      console.error('Game not found');
       return;
     }
 
     try {
       game.handleBidInput({ playerId, contract });
     } catch (err) {
-      console.log("[ERROR]", (err as Error).message);
+      console.log('[ERROR]', (err as Error).message);
     }
   });
 
   // Subscribe to moves
-  nats.subscribe("game.move", async (msg: string) => {
+  nats.subscribe('game.move', async (msg: string) => {
     const { gameId, move } = JSON.parse(msg);
     const game = games.find((g) => g.state.id === gameId);
     if (!game) {
-      console.error("Game not found");
+      console.error('Game not found');
       return;
     }
 
     try {
       game.handleMoveInput(move);
     } catch (err) {
-      console.log("[ERROR]", (err as Error).message);
+      console.log('[ERROR]', (err as Error).message);
     }
   });
 
   // Subscribe to disconnects (optional)
-  nats.subscribe("game.disconnect", async (msg: string) => {
+  nats.subscribe('game.disconnect', async (msg: string) => {
     const { socketId } = JSON.parse(msg);
     console.log(`[INFO] Player with socket ${socketId} disconnected`);
     // Could choose to mark player as inactive, pause the game, etc.
   });
 }
 
-start().catch((err) => console.error("[FATAL]", err));
+start().catch((err) => console.error('[FATAL]', err));

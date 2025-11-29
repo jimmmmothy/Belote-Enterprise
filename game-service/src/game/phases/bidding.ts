@@ -1,15 +1,15 @@
-import type { GameState, PhaseType } from "../types";
-import { startPlayingPhase } from "./playing";
+import type { GameState, PhaseType } from '../types';
+import { startPlayingPhase } from './playing';
 
-export const Contracts = ["Pass", "Clubs", "Diamonds", "Hearts", "Spades", "No Trumps", "All Trumps"];
+export const Contracts = ['Pass', 'Clubs', 'Diamonds', 'Hearts', 'Spades', 'No Trumps', 'All Trumps'];
 
 export function startBiddingPhase(state: GameState, emit: Function): GameState {
   const newState = {
     ...state,
-    phase: "BIDDING" as PhaseType,
+    phase: 'BIDDING' as PhaseType,
     currentPlayerIndex: 0,
     bids: new Map(),
-    highestContract: "Pass",
+    highestContract: 'Pass',
   };
   askNextPlayer(newState, emit);
   return newState;
@@ -18,19 +18,19 @@ export function startBiddingPhase(state: GameState, emit: Function): GameState {
 function askNextPlayer(state: GameState, emit: Function) {
   const player = state.players[state.currentPlayerIndex];
   emit({ 
-    type: "BIDDING_TURN", 
+    type: 'BIDDING_TURN', 
     recepient: player.socketId,
     payload: availableContracts(state)
   });
 }
 
 export function availableContracts(state: GameState): string[] {
-  return ["Pass", ...Contracts.slice(Contracts.indexOf(state.highestContract) + 1)];
+  return ['Pass', ...Contracts.slice(Contracts.indexOf(state.highestContract) + 1)];
 }
 
 export function handleBid(state: GameState, playerId: string, contract: string, emit: Function): GameState {
   const player = state.players[state.currentPlayerIndex];
-  if (player.playerId !== playerId) throw Error("Not your turn");
+  if (player.playerId !== playerId) throw Error('Not your turn');
 
   const newBids = new Map(state.bids);
   newBids.set(playerId, contract);
@@ -39,11 +39,11 @@ export function handleBid(state: GameState, playerId: string, contract: string, 
   if (Contracts.indexOf(contract) > Contracts.indexOf(state.highestContract))
     highestContract = contract;
 
-  let nextPlayerIndex = (state.currentPlayerIndex + 1) % 4;
+  const nextPlayerIndex = (state.currentPlayerIndex + 1) % 4;
   const nextPlayer = state.players[nextPlayerIndex];
 
   emit({
-    type: "BID_PLACED", 
+    type: 'BID_PLACED', 
     recepient: state.id,
     payload: { playerId, contract }
   });
@@ -61,19 +61,19 @@ export function handleBid(state: GameState, playerId: string, contract: string, 
 }
 
 function finishBiddingPhase(state: GameState, emit: Function): GameState {
-  if (state.highestContract === "Pass") {
+  if (state.highestContract === 'Pass') {
     state.players.forEach(p => p.cards = []);
     state.dealer.shuffle();
     state.dealer.firstDeal(state.players);
     emit({
-      type: "SEND_CARDS", 
+      type: 'SEND_CARDS', 
       payload: state.players
     });
     return startBiddingPhase(state, emit);
   }
 
   emit({
-    type: "BIDDING_FINISHED",
+    type: 'BIDDING_FINISHED',
     recepient: state.id,
     payload: { highestContract: state.highestContract }
   });

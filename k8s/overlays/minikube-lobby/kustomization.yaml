@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base/config/application-configmap.yaml
+  - ../../base/config/application-secrets.yaml
+  - ../../base/nats/deployment.yaml
+  - ../../base/nats/service.yaml
+  - ../../base/lobbies-postgres/statefulset.yaml
+  - ../../base/lobbies-postgres/service.yaml
+  - ../../base/lobby-service/deployment.yaml
+  - ../../base/lobby-service/service.yaml
+  - ../../base/lobby-service/hpa.yaml

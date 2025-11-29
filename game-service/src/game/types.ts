@@ -1,8 +1,8 @@
-import type { Move } from "../dtos/move.js";
-import Dealer from "./dealer.js";
-import type Player from "./player.js";
+import type { Move } from '../dtos/move.js';
+import Dealer from './dealer.js';
+import type Player from './player.js';
 
-export type PhaseType = "BIDDING" | "PLAYING" | "SCORING";
+export type PhaseType = 'BIDDING' | 'PLAYING' | 'SCORING';
 
 export type GameState = {
   id: string;
