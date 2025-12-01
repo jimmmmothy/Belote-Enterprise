@@ -7,7 +7,7 @@ export const options = {
 };
 
 export default function () {
-  const url1 = "http://localhost:3000/lobbies"; 
+  const url1 = "http://api.belote.local/lobbies"; 
   const payload1 = JSON.stringify({ lobbyName: "StressTest", playerName: `User ${Math.random()}` }); 
   const headers = { "Content-Type": "application/json" }; 
   
@@ -16,7 +16,7 @@ export default function () {
 
   if (res1.status === 201) {
     const body1 = JSON.parse(res1.body);
-    const url2 = `http://localhost:3000/lobbies/${body1.lobbyId}/join`;
+    const url2 = `http://api.belote.local/lobbies/${body1.lobbyId}/join`;
 
     for (let i = 0; i < 3; i++) {
       const payload2 = JSON.stringify({ playerName: `User ${Math.random()}` });
