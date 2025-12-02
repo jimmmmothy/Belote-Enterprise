@@ -9,6 +9,7 @@
   "dependencies": {
     "@prisma/client": "^6.18.0",
     "@types/node": "^24.9.1",
+    "@vitest/coverage-v8": "^4.0.14",
     "dotenv": "^17.2.3",
     "nats": "^2.29.3",
     "prisma": "^6.18.0",
