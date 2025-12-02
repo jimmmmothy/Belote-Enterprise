@@ -26,8 +26,8 @@ jobs:
         run: docker build -t server:zap server
 
       - name: Run server locally for scan
-        run: | 
-          docker network create zap-net
+        run: |
+          docker network create zap-net || true
           docker run -d --name nats-zap --network zap-net -p 4222:4222 nats:latest
           docker run -d --name server-zap --network zap-net -p 3000:3000 -e NATS_URL="nats://nats-zap:4222" server:zap
         # Nats is a required dependency
@@ -47,8 +47,8 @@ jobs:
       - name: Run OWASP ZAP Baseline (OWASP A06/A07 coverage)
         run: |
           target=$(grep -v '^#' security/zap/zap-targets.txt | head -n 1)
-          docker run --rm --network host -v ${{ github.workspace }}/security/zap:/zap/wrk owasp/zap2docker-stable \
-            zap-baseline.py -t "${target:-http://localhost:3000}" -c zap-baseline.conf -I -J zap-report.json -r zap-report.html
+          docker run --rm --network host -v ${{ github.workspace }}/security/zap:/zap/wrk securecodebox/zap \
+            /zap/zap-baseline.py -t "${target:-http://localhost:3000}" -c zap-baseline.conf -I -J zap-report.json -r zap-report.html
 
       - name: Upload ZAP report
         uses: actions/upload-artifact@v4
