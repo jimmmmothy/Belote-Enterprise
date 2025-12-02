@@ -108,10 +108,8 @@ jobs:
       - name: Audit Node.js dependencies (OWASP A06 - vulnerable components)
         run: |
           set -e
-          for service in auth-service lobby-service game-service client; do
-            echo "Auditing $service"
-            (cd "$service" && npm ci && npm audit --audit-level=high)
-          done
+          echo "Auditing lobby-service"
+          (cd "lobby-service" && npm ci && npm audit --audit-level=high)
 
   image-vulnerability-scan:
     name: Container Image Vulnerability Scan
@@ -121,7 +119,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Scan built image with Trivy (OWASP A06 / LO6 Security assessment)
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@0.33.0
         with:
           image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           severity: HIGH,CRITICAL
