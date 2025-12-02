@@ -27,8 +27,9 @@ jobs:
 
       - name: Run server locally for scan
         run: | 
-          docker run -d --name nats-zap -p 4222:4222 nats:latest 
-          docker run -d --name server-zap -p 3000:3000 server:zap
+          docker network create zap-net
+          docker run -d --name nats-zap --network zap-net -p 4222:4222 nats:latest
+          docker run -d --name server-zap --network zap-net -p 3000:3000 -e NATS_URL="nats://nats-zap:4222" server:zap
         # Nats is a required dependency
 
       - name: Wait for service readiness
@@ -59,4 +60,4 @@ jobs:
 
       - name: Cleanup containers
         if: always()
-        run: docker rm -f server-zap && docker rm -f nats-zap || true
+        run: docker rm -f server-zap nats-zap || true
