@@ -41,6 +41,10 @@ initNats()
   })
   .catch(err => console.log('[ERROR] NATS connection error:', err));
 
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'OK' });
+});
+
 app.post('/auth/register', async (req, res) => {
   try {
     const data = req.body;

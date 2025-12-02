@@ -1,0 +1,58 @@
+name: Security DAST
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - "security/zap/**"
+      - ".github/workflows/security-dast.yaml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "server/**"
+      - "security/zap/**"
+      - ".github/workflows/security-dast.yaml"
+
+jobs:
+  dast-owasp-zap:
+    name: OWASP ZAP Baseline Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build server container (DAST target)
+        run: docker build -t server:zap server
+
+      - name: Run server locally for scan
+        run: docker run -d --name server-zap -p 3000:3000 server:zap
+      - name: Wait for service readiness
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/health || curl -sf http://localhost:3000/; then
+              echo "Service is reachable"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Service did not become ready in time" >&2
+          exit 1
+
+      - name: Run OWASP ZAP Baseline (OWASP A06/A07 coverage)
+        run: |
+          target=$(grep -v '^#' security/zap/zap-targets.txt | head -n 1)
+          docker run --rm --network host -v ${{ github.workspace }}/security/zap:/zap/wrk owasp/zap2docker-stable \
+            zap-baseline.py -t "${target:-http://localhost:3000}" -c zap-baseline.conf -I -J zap-report.json -r zap-report.html
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-baseline-report
+          path: |
+            zap-report.html
+            zap-report.json
+
+      - name: Cleanup containers
+        if: always()
+        run: docker rm -f server-zap || true

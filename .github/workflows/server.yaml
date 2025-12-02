@@ -43,6 +43,25 @@ jobs:
       - name: Test (if present)
         run: npm run test --if-present
 
+  sonarqube-analysis:
+    name: SonarQube Analysis
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node (for coverage tooling)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install root dependencies (coverage helpers)
+        run: npm ci
+      - name: SonarQube Scan (LO4 automation, LO6 code quality/security)
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
   build-and-push:
     needs: build-and-test
     if: github.event_name == 'push'
@@ -72,8 +91,37 @@ jobs:
             -t $IMAGE_NAME:${{ github.sha }} \
             server
 
-  deploy-minikube:
+  dependency-security-scan:
+    name: Dependency Security Scan
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Audit Node.js dependencies (OWASP A06 - vulnerable components)
+        run: |
+          set -e
+          for service in auth-service lobby-service game-service client; do
+            echo "Auditing $service"
+            (cd "$service" && npm ci && npm audit --audit-level=high)
+          done
+
+  image-vulnerability-scan:
+    name: Container Image Vulnerability Scan
     needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Scan built image with Trivy (OWASP A06 / LO6 Security assessment)
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: 1
+
+  deploy-minikube:
+    needs: [build-and-push, dependency-security-scan, image-vulnerability-scan]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, minikube]
     steps:

@@ -26,3 +26,13 @@ spec:
                 name: server
                 port:
                   number: 3000
+    - host: sonar.belote.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sonarqube
+                port:
+                  number: 9000

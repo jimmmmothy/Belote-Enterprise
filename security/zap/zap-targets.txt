@@ -1,0 +1,2 @@
+# Add target URLs for baseline scans (one per line).
+http://localhost:3000
