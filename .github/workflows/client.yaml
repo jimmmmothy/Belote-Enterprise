@@ -44,7 +44,7 @@ jobs:
   sonarqube-analysis:
     name: SonarQube Analysis
     needs: build-and-test
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -113,11 +113,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Scan built image with Trivy (OWASP A06 / LO6 Security assessment)
-        uses: aquasecurity/trivy-action@v0.20.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           severity: HIGH,CRITICAL
-          exit-code: 1
+          exit-code: '1'
 
   deploy-minikube:
     needs: [build-and-push, dependency-security-scan, image-vulnerability-scan]
