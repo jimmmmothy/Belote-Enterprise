@@ -48,7 +48,7 @@ jobs:
         run: |
           target=$(grep -v '^#' security/zap/zap-targets.txt | head -n 1)
           docker run --rm --network zap-net -v ${{ github.workspace }}/security/zap:/zap/wrk zaproxy/zap-stable \
-            zap-baseline.py -t "${target:-http://localhost:3000}" -c zap-baseline.conf -I -J zap-report.json -r zap-report.html
+            zap-baseline.py -t "${target:-http://localhost:3000}" -a -I -J zap-report.json -r zap-report.html
 
       - name: Upload ZAP report
         uses: actions/upload-artifact@v4
