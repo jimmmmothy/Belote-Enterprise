@@ -56,6 +56,13 @@ jobs:
           node-version: 20
       - name: Install root dependencies (coverage helpers)
         run: npm ci
+      - name: Generate coverage reports for services
+        run: |
+          set -e
+          for service in auth-service lobby-service game-service; do
+            echo "Running coverage for $service"
+            (cd "$service" && npm ci && npx vitest run --coverage --coverage.reporter=lcov)
+          done
       - name: SonarQube Scan (LO4 automation, LO6 code quality/security)
         uses: SonarSource/sonarqube-scan-action@v6
         env:
