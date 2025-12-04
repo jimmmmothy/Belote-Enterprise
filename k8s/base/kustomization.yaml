@@ -14,7 +14,7 @@ resources:
   - server/service.yaml
   - client/deployment.yaml
   - client/service.yaml
-  - sonarqube/deployment.yaml
+  - sonarqube/statefulset.yaml
   - sonarqube/service.yaml
   - nats/deployment.yaml
   - nats/service.yaml
