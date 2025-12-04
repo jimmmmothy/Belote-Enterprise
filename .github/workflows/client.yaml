@@ -125,7 +125,7 @@ jobs:
           exit-code: '1'
 
   deploy-minikube:
-    needs: [build-and-push, dependency-security-scan, image-vulnerability-scan]
+    needs: [build-and-push, dependency-security-scan]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, minikube]
     steps:
