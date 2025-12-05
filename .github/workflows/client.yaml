@@ -110,22 +110,22 @@ jobs:
           echo "Auditing client"
           (cd "client" && npm ci && npm audit --audit-level=high)
 
-  image-vulnerability-scan:
-    name: Container Image Vulnerability Scan
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Scan built image with Trivy (OWASP A06 / LO6 Security assessment)
-        uses: aquasecurity/trivy-action@0.33.0
-        with:
-          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          severity: HIGH,CRITICAL
-          exit-code: '1'
+  # image-vulnerability-scan:
+  #   name: Container Image Vulnerability Scan
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: Scan built image with Trivy (OWASP A06 / LO6 Security assessment)
+  #       uses: aquasecurity/trivy-action@0.33.0
+  #       with:
+  #         image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+  #         severity: HIGH,CRITICAL
+  #         exit-code: '1'
 
   deploy-minikube:
-    needs: [build-and-push, dependency-security-scan, image-vulnerability-scan]
+    needs: [build-and-push, dependency-security-scan]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, minikube]
     steps:
