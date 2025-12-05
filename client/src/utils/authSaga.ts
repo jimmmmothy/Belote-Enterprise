@@ -31,25 +31,25 @@ function getUsernameFromPayload(payload: JwtPayload | null): string | null {
 export function persistAuthFromToken(token: string) {
   const payload = decodeJwtPayload(token);
   const username = getUsernameFromPayload(payload);
-  if (username) localStorage.setItem("username", username);
+  if (username) sessionStorage.setItem("username", username);
 }
 
 export function ensureAuthenticatedUser(): AuthContext {
-  const token = localStorage.getItem("token");
-  const cachedUsername = localStorage.getItem("username");
+  const token = sessionStorage.getItem("token");
+  const cachedUsername = sessionStorage.getItem("username");
   const payload = token ? decodeJwtPayload(token) : null;
 
   const exp = payload?.exp ? payload.exp * 1000 : null;
   if (!token || (exp && Date.now() >= exp)) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("username");
     throw new Error("UNAUTHENTICATED");
   }
 
   const username = getUsernameFromPayload(payload) || cachedUsername;
   if (!username) throw new Error("USERNAME_MISSING");
 
-  localStorage.setItem("username", username);
+  sessionStorage.setItem("username", username);
   return { token, username };
 }
 

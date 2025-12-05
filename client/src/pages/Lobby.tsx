@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { loadConfig } from "../config";
-import { ensureAuthenticatedUser, runLobbySaga } from "../utils/authSaga";
+import { runLobbySaga } from "../utils/authSaga";
 import "./Lobby.css";
 
 type Lobby = { id: string; name: string; status: string };
@@ -21,13 +21,7 @@ export default function LobbyPage() {
   }, []);
 
   useEffect(() => {
-    try {
-      const user = ensureAuthenticatedUser();
-      setUsername(user.username);
-    } catch {
-      navigate("/");
-      return;
-    }
+    setUsername('random');
     fetchLobbies();
     const interval = setInterval(fetchLobbies, 5000);
     return () => clearInterval(interval);

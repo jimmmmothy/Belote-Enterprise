@@ -14,7 +14,8 @@ type GameEventName =
   | 'PLAYING_TURN'
   | 'MOVE_PLAYED'
   | 'TRICK_FINISHED'
-  | 'ROUND_FINISHED';
+  | 'ROUND_FINISHED'
+  | 'GAME_FINISHED';
 
 interface GameEvent<T = any> {
   type: GameEventName;

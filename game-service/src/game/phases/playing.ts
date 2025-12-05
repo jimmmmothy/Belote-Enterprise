@@ -127,7 +127,41 @@ export function handleMove(state: GameState, move: Move, emit: Function): GameSt
 
     console.log('[INFO] Current score:', state.score);
 
-    return { ...state, currentPlayerIndex: winnerIndex!, currentTrick: [] };
+    const nextState = { ...state, currentPlayerIndex: winnerIndex!, currentTrick: [] };
+    const noCardsLeft = state.players.every((p) => p.cards.length === 0);
+
+    if (noCardsLeft) {
+      const endedAt = new Date().toISOString();
+      const teamAScore = state.score.team0;
+      const teamBScore = state.score.team1;
+      const isDraw = teamAScore === teamBScore;
+      const winningTeam = teamAScore > teamBScore ? 'team 0' : teamBScore > teamAScore ? 'team 1' : null;
+
+      const payload = {
+        type: 'game.finished',
+        gameId: state.id,
+        lobbyId: state.id,
+        endedAt,
+        durationSeconds: undefined as number | undefined,
+        players: state.players.map((player) => {
+          const team = player.team === 'team 0' ? 'A' : 'B';
+          const result = player.team === winningTeam ? 'WIN' : 'LOSS';
+          const score = player.team === 'team 0' ? teamAScore : teamBScore;
+          return {
+            userId: player.playerId,
+            username: player.playerId,
+            team,
+            result,
+            score
+          };
+        })
+      };
+
+      emit({ type: 'GAME_FINISHED', payload });
+      return { ...nextState, phase: 'SCORING' as const };
+    }
+
+    return nextState;
   }
 
   const nextPlayerIndex = (state.currentPlayerIndex + 1) % 4;

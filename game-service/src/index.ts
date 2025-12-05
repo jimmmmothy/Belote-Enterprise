@@ -9,13 +9,20 @@ async function start() {
   const nats = await initNats();
 
   // Utility to publish game updates
-  function publishEvent(type: string, payload: any, recepient: any) {
-    nats.sendMessage('game.event', { type, payload, recepient });
+  function publishEvent(event: { type: string; payload: any; recepient?: any }) {
+    if (event.type === 'GAME_FINISHED') {
+      nats.sendMessage('game.finished', event.payload);
+    }
+    nats.sendMessage('game.event', {
+      type: event.type,
+      payload: event.payload,
+      recepient: event.recepient
+    });
   }
 
   // Subscribe to player registration
   nats.subscribe('game.register', async (msg: string) => {
-    const { id, playerId, socketId } = JSON.parse(msg);
+    const { id, playerId, socketId, username } = JSON.parse(msg);
 
     let game = games.find((g) => g.state.id === id);
     if (!game) {
@@ -23,7 +30,7 @@ async function start() {
 
       // Wire up game event system
       game.on((event) => {
-        publishEvent(event.type, event.payload, event.recepient);
+        publishEvent(event);
       });
 
       games.push(game);
@@ -39,7 +46,7 @@ async function start() {
     }
 
     // Otherwise, new player joins
-    player = new Player(playerId, `team ${game.state.players.length % 2}`, socketId);
+    player = new Player(playerId, `team ${game.state.players.length % 2}`, username, socketId);
     game.addPlayer(player);
     console.log('[INFO] New player joined:', player.playerId);
   });

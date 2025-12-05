@@ -39,8 +39,6 @@ services:
       - nats
     environment:
       - NATS_URL=nats://nats:4222
-    # volumes:
-    #   - ./game-service:/app
 
   lobby-service:
     build: ./lobby-service
@@ -51,8 +49,6 @@ services:
     environment:
       - NATS_URL=nats://nats:4222
       - LOBBY_DATABASE_URL=postgresql://postgres:admin@lobbies-postgres:5432/belote-lobbies
-    # volumes:
-    #   - ./lobby-service:/app
 
   auth-service:
     build: ./auth-service
@@ -73,8 +69,18 @@ services:
       - NATS_URL=nats://nats:4222
     ports:
       - "3000:3000"   
-    # volumes:
-    #   - ./server:/app
+
+  profile-service:
+    build: ./profile-service
+    container_name: profile-service
+    depends_on:
+      - nats
+    environment:
+      - NATS_URL=nats://nats:4222
+      - COSMOS_ENDPOINT=https://belote-profile-db.documents.azure.com:443/
+      - COSMOS_DATABASE_ID=belote-profiles
+      - COSMOS_PROFILES_CONTAINER_ID=profiles
+      - COSMOS_MATCH_HISTORY_CONTAINER_ID=matchHistory
 
   client:
     build: ./client
@@ -82,9 +88,7 @@ services:
     depends_on:
       - server
     ports:
-      - "5173:80"   # vite dev server
-    # volumes:
-    #   - ./client:/app
+      - "5173:80"
   
   # DATABASES
   lobbies-postgres:

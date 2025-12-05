@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
     "nats": "^2.29.3",
     "prisma": "^6.18.0",
     "prom-client": "^15.1.3",

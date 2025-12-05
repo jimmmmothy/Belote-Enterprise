@@ -21,18 +21,18 @@ export default function AuthPage() {
 
   // Auto logout when token is expired
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return;
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       const exp = payload.exp * 1000;
       if (Date.now() >= exp) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("username");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("username");
       }
     } catch {
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("username");
       console.error("Error parsing token.");
     }
   }, []);
@@ -77,7 +77,7 @@ export default function AuthPage() {
         return;
       }
 
-      localStorage.setItem("token", token);
+      sessionStorage.setItem("token", token);
       persistAuthFromToken(token);
       setSuccess("Success! Redirecting...");
       setTimeout(() => navigate("/lobby"), 800);

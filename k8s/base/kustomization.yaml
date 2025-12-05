@@ -12,6 +12,8 @@ resources:
   - game-service/service.yaml
   - server/deployment.yaml
   - server/service.yaml
+  - profile-service/deployment.yaml
+  - profile-service/service.yaml
   - client/deployment.yaml
   - client/service.yaml
   - sonarqube/statefulset.yaml

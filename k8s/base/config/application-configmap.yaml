@@ -16,3 +16,6 @@ data:
   LOBBIES_POSTGRES_DB: "belote-lobbies"
   JWT_ISSUER: "belote-app"
   CLIENT_API_BASE: "http://server:3000"
+  COSMOS_DATABASE_ID: "belote-profiles"
+  COSMOS_PROFILES_CONTAINER_ID: "profiles"
+  COSMOS_MATCH_HISTORY_CONTAINER_ID: "match-history"

@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: profile-service
+  labels:
+    app: belote
+    component: profile-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: belote
+      component: profile-service
+  template:
+    metadata:
+      labels:
+        app: belote
+        component: profile-service
+    spec:
+      containers:
+        - name: profile-service
+          image: ghcr.io/jimmmmothy/profile-service:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: belote-config
+            - secretRef:
+                name: belote-secrets
+          env:
+            - name: COSMOS_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: belote-secrets
+                  key: COSMOS_ENDPOINT
+            - name: COSMOS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: belote-secrets
+                  key: COSMOS_KEY
+            - name: COSMOS_DATABASE_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: belote-config
+                  key: COSMOS_DATABASE_ID
+            - name: COSMOS_PROFILES_CONTAINER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: belote-config
+                  key: COSMOS_PROFILES_CONTAINER_ID
+            - name: COSMOS_MATCH_HISTORY_CONTAINER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: belote-config
+                  key: COSMOS_MATCH_HISTORY_CONTAINER_ID
+            - name: PORT
+              value: "4003"
+          ports:
+            - containerPort: 4003
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4003
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4003
+            initialDelaySeconds: 10
+            periodSeconds: 20

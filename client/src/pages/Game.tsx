@@ -5,7 +5,11 @@ import type { AvailableContracts, Move, ReceiveHand, TableProps } from "../types
 import { Table } from "../components/Table";
 
 const SERVER_URL = await loadConfig().then(config => config?.serverUrl || "");
-const socket = io(SERVER_URL);
+const socket = io(SERVER_URL, {
+  auth: {
+    token: typeof window !== "undefined" ? localStorage.getItem("token") : undefined,
+  },
+});
 
 export default function GamePage() {
   const [tableProps, setTableProps] = useState<TableProps>({ myId: "", hand: [], players: [], myTurn: false });
