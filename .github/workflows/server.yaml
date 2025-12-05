@@ -124,6 +124,7 @@ jobs:
   #         image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
   #         severity: HIGH,CRITICAL
   #         exit-code: '1'
+  #
 
   deploy-minikube:
     needs: [build-and-push, dependency-security-scan]
