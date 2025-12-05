@@ -1,4 +1,3 @@
-import express from 'express';
 import dotenv from 'dotenv';
 import { initNats } from './nats-client';
 import { initializeCosmos } from './config/cosmos';
@@ -7,7 +6,6 @@ import { getMatchHistoryByUserId, insertMatchHistoryEntries } from './repositori
 import { ProfileDocument } from './models/profile';
 import { MatchHistoryEntry } from './models/matchHistory';
 import { subscribeToGameFinished } from './subscribers/gameFinishedSubscriber';
-import { createHistoryRoutes } from './routes/historyRoutes';
 import { subscribeToPrivacyExport } from './subscribers/privacyExportSubscriber';
 import { subscribeToPrivacyDelete } from './subscribers/privacyDeleteSubscriber';
 
@@ -25,11 +23,6 @@ function parseJsonMessage<T>(raw: string): T | null {
 async function start() {
   await initializeCosmos();
   const nats = await initNats();
-
-  const app = express();
-  app.use(express.json());
-  app.get('/health', (_req, res) => res.json({ status: 'ok' }));
-  app.use('/api', createHistoryRoutes());
 
   nats.subscribe('profile.health', (_msg, reply) => {
     if (reply) nats.sendMessage(reply, { status: 'ok' });
@@ -155,9 +148,6 @@ async function start() {
   subscribeToGameFinished(nats);
   subscribeToPrivacyExport(nats);
   subscribeToPrivacyDelete(nats);
-
-  const port = Number.parseInt(process.env.PORT ?? '4003', 10);
-  app.listen(port, () => console.log(`[HTTP] profile-service listening on ${port}`));
 }
 
 start().catch((err) => {

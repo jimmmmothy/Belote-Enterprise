@@ -52,19 +52,13 @@ spec:
                 configMapKeyRef:
                   name: belote-config
                   key: COSMOS_MATCH_HISTORY_CONTAINER_ID
-            - name: PORT
-              value: "4003"
-          ports:
-            - containerPort: 4003
           readinessProbe:
-            httpGet:
-              path: /health
-              port: 4003
-            initialDelaySeconds: 5
+            exec:
+              command: ["/bin/sh", "-c", "pgrep node"]
+            initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
-            httpGet:
-              path: /health
-              port: 4003
-            initialDelaySeconds: 10
+            exec:
+              command: ["/bin/sh", "-c", "pgrep node"]
+            initialDelaySeconds: 20
             periodSeconds: 20
