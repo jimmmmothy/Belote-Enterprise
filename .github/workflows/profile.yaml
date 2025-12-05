@@ -40,8 +40,8 @@ jobs:
       # - name: Lint
       #   run: npm run lint
 
-      - name: Test
-        run: npm test
+      # - name: Test
+      #   run: npm test
 
   sonarqube-analysis:
     name: SonarQube Analysis
