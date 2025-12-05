@@ -137,9 +137,7 @@ jobs:
       - name: Apply secrets (including Cosmos)
         run: |
           set -e
-          minikube kubectl -- create secret generic belote-secrets \
-            --from-literal=COSMOS_KEY="${{ secrets.COSMOS_KEY }}" \
-            --dry-run=client -o yaml | minikube kubectl -- apply -f -
+          minikube kubectl patch secret belote-secrets -p '{"stringData":{"COSMOS_KEY":"${{ secrets.COSMOS_KEY }}"}}'
 
       - name: Apply profile overlay
         run: minikube kubectl -- apply -k k8s/overlays/minikube

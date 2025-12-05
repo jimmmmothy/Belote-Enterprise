@@ -48,7 +48,7 @@ services:
       - lobbies-postgres
     environment:
       - NATS_URL=nats://nats:4222
-      - LOBBY_DATABASE_URL=postgresql://postgres:admin@lobbies-postgres:5432/belote-lobbies
+      - LOBBY_DATABASE_URL=postgresql://postgres:admin@lobbies-db:5432/belote-lobbies
 
   auth-service:
     build: ./auth-service
@@ -58,7 +58,7 @@ services:
       - users-postgres
     environment:
       - NATS_URL=nats://nats:4222
-      - USER_DATABASE_URL=postgresql://postgres:admin@users-postgres:5432/belote-users
+      - USER_DATABASE_URL=postgresql://postgres:admin@users-db:5432/belote-users
 
   server:
     build: ./server
@@ -101,7 +101,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - lobbies_belote_data:/var/lib/postgresql/data
+      - lobbies_belote_data:/var/lib/postgres/data
 
   users-postgres:
     image: postgres:latest
@@ -113,7 +113,7 @@ services:
     ports:
       - "5431:5432"
     volumes:
-      - auth_belote_data:/var/lib/postgresql/data
+      - auth_belote_data:/var/lib/postgres/data
 
 volumes:
   lobbies_belote_data:
