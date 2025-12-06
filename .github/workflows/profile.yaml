@@ -141,4 +141,4 @@ jobs:
         run: minikube kubectl -- set image deployment/profile-service profile-service=$IMAGE_NAME:${{ github.sha }} -n default
 
       - name: Verify rollout
-        run: minikube kubectl -- rollout status deployment/profile-service --timeout=120s
+        run: minikube kubectl -- rollout status deployment/profile-service --timeout=121s
