@@ -14,7 +14,7 @@ export function createProfileRoutes(nats: NatsClient) {
 
   router.get('/profiles/me', authMiddleware, async (req, res) => {
     try {
-      const profile = await getOrCreateProfile(req.user!.userId);
+      const profile = await getOrCreateProfile(req.user!.userId, req.user!.username);
       return res.json(profile);
     } catch (err) {
       console.error('[ERROR] Failed to fetch profile', err);

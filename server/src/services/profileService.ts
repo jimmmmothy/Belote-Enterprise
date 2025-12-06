@@ -16,7 +16,7 @@ function requireNats(): NatsClient {
   return natsClient;
 }
 
-export async function getOrCreateProfile(userId: string): Promise<ProfileDocument> {
+export async function getOrCreateProfile(userId: string, username?: string): Promise<ProfileDocument> {
   const nats = requireNats();
   const existing = await nats.request('profile.get', { userId });
 
@@ -26,7 +26,7 @@ export async function getOrCreateProfile(userId: string): Promise<ProfileDocumen
   const defaultProfile: ProfileDocument = {
     id: userId,
     userId,
-    username: `User-${userId.slice(0, 6)}`,
+    username: username || `User-${userId.slice(0, 6)}`,
     createdAt: now,
     updatedAt: now,
     showInLeaderboards: true,
