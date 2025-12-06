@@ -3,13 +3,13 @@ import { check, sleep } from "k6";
 
 export const options = {
   vus: 1000, // virtual users
-  duration: "45s",
+  duration: "300s",
 };
 
 export default function () {
   const url1 = "http://api.belote.local/lobbies"; 
   const payload1 = JSON.stringify({ lobbyName: "StressTest", playerName: `User ${Math.random()}` }); 
-  const headers = { "Content-Type": "application/json" }; 
+  const headers = { "Content-Type": "application/json", "Authorization": "Bearer <token>" }; 
   
   const res1 = http.post(url1, payload1, { headers }); 
   check(res1, { "create 201": (r) => r.status === 201 });
