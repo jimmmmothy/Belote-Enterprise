@@ -1,52 +1,34 @@
 import { loadConfig } from "../config";
 import axios from "axios";
-
-type JwtPayload = { exp?: number; username?: string; name?: string; email?: string };
+import { readJwtPayload, resolveUsername, isTokenExpired } from "./auth";
 
 export type AuthContext = {
   token: string;
   username: string;
 };
 
-type LobbySagaInput =
-  | { kind: "create"; lobbyName: string }
-  | { kind: "join"; lobbyId: string };
+type LobbySagaInput = { kind: "create"; lobbyName: string } | { kind: "join"; lobbyId: string };
 
 type LobbySagaResult = { lobbyId: string; playerId: string };
 
-function decodeJwtPayload(token: string): JwtPayload | null {
-  try {
-    const payload = token.split(".")[1];
-    return JSON.parse(atob(payload));
-  } catch {
-    return null;
-  }
-}
-
-function getUsernameFromPayload(payload: JwtPayload | null): string | null {
-  if (!payload) return null;
-  return (payload.username || payload.name || payload.email || "").trim() || null;
-}
-
 export function persistAuthFromToken(token: string) {
-  const payload = decodeJwtPayload(token);
-  const username = getUsernameFromPayload(payload);
+  const payload = readJwtPayload(token);
+  const username = resolveUsername(payload);
   if (username) sessionStorage.setItem("username", username);
 }
 
 export function ensureAuthenticatedUser(): AuthContext {
   const token = sessionStorage.getItem("token");
   const cachedUsername = sessionStorage.getItem("username");
-  const payload = token ? decodeJwtPayload(token) : null;
+  const payload = token ? readJwtPayload(token) : null;
 
-  const exp = payload?.exp ? payload.exp * 1000 : null;
-  if (!token || (exp && Date.now() >= exp)) {
+  if (!token || isTokenExpired(token)) {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("username");
     throw new Error("UNAUTHENTICATED");
   }
 
-  const username = getUsernameFromPayload(payload) || cachedUsername;
+  const username = resolveUsername(payload) || cachedUsername;
   if (!username) throw new Error("USERNAME_MISSING");
 
   sessionStorage.setItem("username", username);

@@ -7,7 +7,7 @@ import { Table } from "../components/Table";
 const SERVER_URL = await loadConfig().then(config => config?.serverUrl || "");
 const socket = io(SERVER_URL, {
   auth: {
-    token: typeof window !== "undefined" ? localStorage.getItem("token") : undefined,
+    token: typeof window !== "undefined" ? sessionStorage.getItem("token") : undefined,
   },
 });
 

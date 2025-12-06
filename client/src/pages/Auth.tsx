@@ -4,6 +4,7 @@ import { useState, useEffect, type BaseSyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { loadConfig } from "../config";
 import { persistAuthFromToken } from "../utils/authSaga";
+import { clearAuthSession, isTokenExpired } from "../utils/auth";
 import "./Auth.css";
 
 export default function AuthPage() {
@@ -19,23 +20,15 @@ export default function AuthPage() {
 
   const navigate = useNavigate();
 
-  // Auto logout when token is expired
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     if (!token) return;
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const exp = payload.exp * 1000;
-      if (Date.now() >= exp) {
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("username");
-      }
-    } catch {
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("username");
-      console.error("Error parsing token.");
+    if (isTokenExpired(token)) {
+      clearAuthSession();
+      return;
     }
-  }, []);
+    navigate("/lobby", { replace: true });
+  }, [navigate]);
 
   const toggleMode = () => {
     setMode(mode === "signin" ? "signup" : "signin");

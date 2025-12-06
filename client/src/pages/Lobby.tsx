@@ -21,7 +21,8 @@ export default function LobbyPage() {
   }, []);
 
   useEffect(() => {
-    setUsername('random');
+    const storedUsername = sessionStorage.getItem("username");
+    setUsername(storedUsername);
     fetchLobbies();
     const interval = setInterval(fetchLobbies, 5000);
     return () => clearInterval(interval);
