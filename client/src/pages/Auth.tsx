@@ -85,7 +85,7 @@ export default function AuthPage() {
   return (
     <div className="container">
       <div className="auth-box">
-        <h1>{mode === "signin" ? "Sign In My Friend" : "Sign Up"}</h1>
+        <h1>{mode === "signin" ? "Sign In" : "Sign Up"}</h1>
 
         {error && <div style={{ color: "red", marginBottom: 10 }}>{error}</div>}
         {success && <div style={{ color: "lime", marginBottom: 10 }}>{success}</div>}
