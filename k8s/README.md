@@ -9,7 +9,7 @@ This directory contains a Kustomize-based layout ready for Minikube now and GitO
    - `minikube addons enable ingress`
 2.1. Apply metrics-server and configure listening port:
    - `kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`
-   - `kubectl -n kube-system patch deploy metrics-server --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/args","value":["--cert-dir=/tmp","--secure-port=10250","--kubelet-insecure-tls" "--kubelet-preferred-address-types=InternalIP,Hostname,InternalDNS,ExternalDNS,ExternalIP","--kubelet-use-node-status-port"]}]'`
+   - `kubectl -n kube-system patch deploy metrics-server --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/args","value":["--cert-dir=/tmp","--secure-port=10250","--kubelet-insecure-tls","--kubelet-preferred-address-types=InternalIP,Hostname,InternalDNS,ExternalDNS,ExternalIP","--kubelet-use-node-status-port"]}]'`
 3. Deploy with Kustomize:
    - `kubectl apply -k k8s/overlays/minikube`
 4. Access the frontend/API:
